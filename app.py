@@ -287,6 +287,9 @@ def upload_to_calendar():
     return "勤務予定をGoogleカレンダーに登録しました。"
 
 
+
 if __name__ == "__main__":
-    app.run(host="localhost", port=5000, debug=True)
+    # Renderが環境変数PORTに割り当てたポート番号を使用
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
 
