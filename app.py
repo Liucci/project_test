@@ -240,7 +240,8 @@ def authorize():
     )
     authorization_url, state = flow.authorization_url(
         access_type="offline",
-        include_granted_scopes="true"
+        include_granted_scopes="true",
+        prompt='select_account consent'  # 都度認証を促す
     )
     session["state"] = state
     return redirect(authorization_url)
@@ -258,13 +259,18 @@ def oauth2callback():
     flow.fetch_token(authorization_response=request.url)
 
     credentials = flow.credentials
+    service = build("oauth2", "v2", credentials=credentials)
+    user_info = service.userinfo().get().execute()
+    user_email = user_info["email"]
+
     session["credentials"] = {
         "token": credentials.token,
         "refresh_token": credentials.refresh_token,
         "token_uri": credentials.token_uri,
         "client_id": credentials.client_id,
         "client_secret": credentials.client_secret,
-        "scopes": credentials.scopes
+        "scopes": credentials.scopes,
+        "email": user_email
     }
     return redirect(url_for("upload_to_calendar"))
 
@@ -284,7 +290,11 @@ def upload_to_calendar():
     for event in events:
         service.events().insert(calendarId="primary", body=event).execute()
 
-    return "勤務予定をGoogleカレンダーに登録しました。"
+    # ✅ email をセッションから取り出して表示に使う
+    user_email = session["credentials"].get("email", "不明なユーザー")
+
+    return render_template("result.html", user_email=user_email)
+
 
 
 
