@@ -236,7 +236,7 @@ def authorize():
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRET_FILE,
         scopes=SCOPES,
-        redirect_uri=url_for("oauth2callback", _external=True)
+        redirect_uri=url_for("oauth2callback", _external=True,_scheme='https')
     )
     authorization_url, state = flow.authorization_url(
         access_type="offline",
@@ -253,7 +253,7 @@ def oauth2callback():
         CLIENT_SECRET_FILE,
         scopes=SCOPES,
         state=state,
-        redirect_uri=url_for("oauth2callback", _external=True)
+        redirect_uri=url_for("oauth2callback", _external=True,_scheme='https')
     )
     flow.fetch_token(authorization_response=request.url)
 
@@ -292,4 +292,3 @@ if __name__ == "__main__":
     # Renderが環境変数PORTに割り当てたポート番号を使用
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
