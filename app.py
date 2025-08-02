@@ -6,11 +6,20 @@ from pytz import timezone
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-import os
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'#HTTP（非SSL）通信でもOAuth許可する
+from dotenv import load_dotenv
 
+# 環境変数の設定
+# OAUTHLIB_RELAX_TOKEN_SCOPE を設定して、トークンのスコープを緩和
+# これにより、トークンのスコープが一致しない場合でも
+# 認証が成功するようになります。
+os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+
+load_dotenv()
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'#HTTP（非SSL）通信でもOAuth許可する
 app = Flask(__name__)
-app.secret_key = "your_secret_key"  # セッションにファイルパスを一時保存するため
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-for-local")
+
+  # セッションにファイルパスを一時保存するため
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -18,7 +27,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 #スコープとGoogle認証関連の定数を追加
-SCOPES = ['https://www.googleapis.com/auth/calendar']
+#取得したい情報に応じてスコープを設定
+# ここではカレンダーとユーザー情報の読み取りを許可
+SCOPES = [
+    "openid",
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/userinfo.email",
+]
+
 CLIENT_SECRET_FILE = 'credentials.json'  # credentials.json がある場合
 
 
@@ -231,12 +247,19 @@ def show_schedule():
     return render_template("show_schedule.html", name=selected_name, events=events)
 
 #Googleログイン開始
+
 @app.route("/authorize")
 def authorize():
+    if os.getenv("FLASK_ENV") == "development":
+        redirect_uri = "http://127.0.0.1:5000/oauth2callback"
+    else:
+        redirect_uri = "https://excel-to-calendar-app.onrender.com/oauth2callback"
+    print(f"🌍 FLASK_ENV: {os.getenv('FLASK_ENV')}")
+    print("🔗 [authorize] redirect_uri =", redirect_uri)
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRET_FILE,
         scopes=SCOPES,
-        redirect_uri=url_for("oauth2callback", _external=True,_scheme='https')
+        redirect_uri=redirect_uri
     )
     authorization_url, state = flow.authorization_url(
         access_type="offline",
@@ -244,17 +267,32 @@ def authorize():
         prompt='select_account consent'  # 都度認証を促す
     )
     session["state"] = state
+
+    print("🔑 [authorize] session['state'] =", session["state"])
+    print("🔗 [authorize] authorization_url =", authorization_url)
     return redirect(authorization_url)
 
 #認証後にトークン受け取り
 @app.route("/oauth2callback")
 def oauth2callback():
-    state = session["state"]
+    print("🟢 /oauth2callback にアクセスされました")
+    state_in_session = session.get("state")# セッションから保存された state を取得
+    state_returned = request.args.get("state")# リダイレクト時に返される state を取得
+    # セッションの state とリクエストの state が一致するか確認
+    # デバッグ用出力
+    print("📥 [oauth2callback] session['state'] =", state_in_session)
+    print("📤 [oauth2callback] request.args['state'] =", state_returned)
+    
+
+    if not state_in_session or state_in_session != state_returned:
+        return f"CSRFエラー: セッション情報が失われたか、stateが一致しません。\nセッション: {state_in_session}, リクエスト: {state_returned}", 400
+
+
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRET_FILE,
         scopes=SCOPES,
-        state=state,
-        redirect_uri=url_for("oauth2callback", _external=True,_scheme='https')
+        state=state_in_session,  # セッションから取得した state を使用
+        redirect_uri=url_for("oauth2callback", _external=True, _scheme="http" if os.getenv("FLASK_ENV") == "development" else "https")
     )
     flow.fetch_token(authorization_response=request.url)
 
@@ -262,6 +300,9 @@ def oauth2callback():
     service = build("oauth2", "v2", credentials=credentials)
     user_info = service.userinfo().get().execute()
     user_email = user_info["email"]
+    
+    # Store user_email in session for later use
+    session["user_email"] = user_email
 
     session["credentials"] = {
         "token": credentials.token,
@@ -269,9 +310,9 @@ def oauth2callback():
         "token_uri": credentials.token_uri,
         "client_id": credentials.client_id,
         "client_secret": credentials.client_secret,
-        "scopes": credentials.scopes,
-        "email": user_email
+        "scopes": credentials.scopes
     }
+    print("✅ OAuth Success! Token:", credentials.token[:10], "...")
     return redirect(url_for("upload_to_calendar"))
 
 #Googleカレンダーへ書き込み
@@ -291,7 +332,7 @@ def upload_to_calendar():
         service.events().insert(calendarId="primary", body=event).execute()
 
     # ✅ email をセッションから取り出して表示に使う
-    user_email = session["credentials"].get("email", "不明なユーザー")
+    user_email = session.get("user_email", "不明なユーザー")
 
     return render_template("result.html", user_email=user_email)
 
@@ -301,4 +342,4 @@ def upload_to_calendar():
 if __name__ == "__main__":
     # Renderが環境変数PORTに割り当てたポート番号を使用
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port,debug=True)
