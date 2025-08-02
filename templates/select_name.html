@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>名前の選択</title>
+</head>
+<body>
+    <h2>Googleカレンダーに登録する「名前」を選んでください</h2>
+    <form action="{{ url_for('select_name') }}" method="post">
+        <label for="name">名前:</label>
+        
+        <select name="selected_name" id="selected_name">
+            {% for name in names %}
+                <option value="{{ name }}">{{ name }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="次へ">
+    </form>
+</body>
+</html>
