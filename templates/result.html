@@ -1,11 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <meta charset="utf-8">
-    <title>登録完了</title>
+    <meta charset="UTF-8">
+    <title>{{ name }} さんのカレンダー結果</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
-<body>
-    <h2>Googleカレンダー登録完了</h2>
-    <p><strong>{{ user_email }}</strong> のGoogleカレンダーに勤務予定を登録しました。</p>
+<body class="container mt-4">
+
+    <h2 class="mb-3">{{ name }} さんの勤務予定</h2>
+
+    <div class="mb-4 d-flex gap-2">
+        <a href="{{ url_for('upload_file') }}" class="btn btn-secondary">🔄 最初に戻る</a>
+        <a href="https://calendar.google.com/" target="_blank" class="btn btn-primary">📅 Googleカレンダーを確認する</a>
+    </div>
+
+    <div class="alert alert-warning">
+        すでに登録済の月の勤務予定は削除され、新たに再登録されました。
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h4>🗑️ 削除された予定</h4>
+            <ul class="list-group">
+                {% for ev in deleted_events %}
+                <li class="list-group-item">
+                    {{ ev.start.date or ev.start.dateTime }} ～ {{ ev.end.date or ev.end.dateTime }}: {{ ev.summary }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="col-md-6">
+            <h4>🆕 再登録された予定</h4>
+            <ul class="list-group">
+                {% for ev in added_events %}
+                <li class="list-group-item">
+                    {{ ev.start.date or ev.start.dateTime }} ～ {{ ev.end.date or ev.end.dateTime }}: {{ ev.summary }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
 </body>
 </html>
+

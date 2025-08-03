@@ -1,14 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
+    <meta charset="UTF-8">
     <title>Excel アップロード</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
-<body>
-    <h1>Excelファイルをアップロード</h1>
-    <form method="post" enctype="multipart/form-data">
-        <input type="file"  name="file" accept=".xlsx" required>
-        <input type="submit" value="アップロード">
-        <!--  -->
-    </form>
+<body class="bg-light">
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white text-center">
+                        <h3 class="mb-0">Excelファイルをアップロード</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input class="form-control" type="file" name="file" accept=".xlsx" required>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-success">アップロード</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
