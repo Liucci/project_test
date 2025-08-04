@@ -31,7 +31,11 @@ SCOPES = [
 ]
 CLIENT_SECRET_FILE = 'credentials.json'
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
+
+@app.route("/upload", methods=[ "GET","POST"])
 def upload_file():
     if request.method == "POST":
         file = request.files.get("file")
@@ -172,6 +176,24 @@ def credentials_to_dict(credentials):
 
 def dict_to_credentials(d):
     return Credentials(**d)
+
+
+
+@app.route('/privacy')
+def privacy():
+    return render_template("privacy.html")
+
+@app.route('/terms')
+def terms():
+    return render_template("terms.html")
+
+@app.route('/about')
+def about():
+    return render_template("about.html")
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
