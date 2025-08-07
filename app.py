@@ -3,10 +3,6 @@
 from flask import Flask, request, render_template, redirect, url_for, session
 import os, pandas as pd
 
-from excel_utils.excel_parserA import parse_schedule_from_sheet_a,get_schedule_month_from_sheet_a, extract_names_from_sheet_a
-from excel_utils.excel_parserB import parse_schedule_from_sheet_b,get_schedule_month_from_sheet_b, extract_names_from_sheet_b
-from excel_utils.excel_parserC import parse_schedule_from_sheet_c,get_schedule_month_from_sheet_c, extract_names_from_sheet_c
-import openpyxl
 from datetime import datetime, timedelta
 from pytz import timezone
 from google_auth_oauthlib.flow import Flow
