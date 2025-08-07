@@ -19,7 +19,7 @@
                     <p>このアプリは、勤務表（Excel）をGoogleカレンダーに登録するためのツールです。</p>
                     <p><strong>※ ご利用にはGoogle認証が必要です。</strong></p>
                     <div class="text-center">
-                        <form action="{{ url_for('upload_file') }}" method="get">
+                        <form action="{{ url_for('authorize') }}">
                             <button type="submit" class="btn btn-success">使用開始</button>
                         </form>
                     </div>
