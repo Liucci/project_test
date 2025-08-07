@@ -1,7 +1,6 @@
-# calendar_utils/pick_up_events.py
 from googleapiclient.discovery import Resource
 from typing import List
-
+from datetime import datetime, timezone
 def pick_up_events(service: Resource, calendar_id: str, year: int, month: int, tag: str = None) -> List[dict]:
     """
     指定年月とタグで予定を抽出
@@ -9,10 +8,10 @@ def pick_up_events(service: Resource, calendar_id: str, year: int, month: int, t
     :param calendar_id: カレンダーID（通常 'primary'）
     :param year: 対象年
     :param month: 対象月
-    :param tag: summaryなどに含まれるタグ（例: 氏名）
-    :return: イベントのリスト
+    :param tag: description に含まれるタグ（例: [勤務表=MAIN]）
+    :return: 該当イベントのリスト
     """
-    from datetime import datetime, timezone
+
 
     start = datetime(year, month, 1, tzinfo=timezone.utc)
     if month == 12:
@@ -30,6 +29,32 @@ def pick_up_events(service: Resource, calendar_id: str, year: int, month: int, t
 
     events = events_result.get('items', [])
 
-    filtered_events = [event for event in events if event.get('description') == tag]
+    if tag:
+        filtered_events = [
+            event for event in events
+            if tag in event.get('description', '')
+        ]
+    else:
+        filtered_events = events
+    
+    
+    simplified_events = []
+    for e in filtered_events:
+        simplified_events.append({
+            "start": e.get("start", {}),
+            "end": e.get("end", {}),
+            "summary": e.get("summary"),
+            "description": e.get("description", ""),
+            "id": e.get("id")
+        })
 
-    return filtered_events
+
+    print(f"[DEBUG] pick_up_events() で抽出されたイベント数: {len(simplified_events)}")
+    print(f"[DEBUG] pick_up_events()で抽出されたイベントの３例: {simplified_events[:3]}")  # 最初の3つのイベントを表示
+    for i, ev in enumerate(simplified_events[:3]):
+        print(f"[DEBUG] html_events[{i}] type: {type(ev)}")
+        for key in [ 'start', 'end', 'summary', 'description']:
+            print(f"    {key}: {ev.get(key)} (type: {type(ev.get(key))})")
+        print(f"  {ev['start']}～{ev['end']}: {ev['summary']} | {ev['description']}")    
+    
+    return simplified_events

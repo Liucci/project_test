@@ -2,7 +2,11 @@
 
 from flask import Flask, request, render_template, redirect, url_for, session
 import os, pandas as pd
-from excel_utils.excel_parser import extract_names_from_excel
+
+from excel_utils.excel_parserA import parse_schedule_from_sheet_a,get_schedule_month_from_sheet_a, extract_names_from_sheet_a
+from excel_utils.excel_parserB import parse_schedule_from_sheet_b,get_schedule_month_from_sheet_b, extract_names_from_sheet_b
+from excel_utils.excel_parserC import parse_schedule_from_sheet_c,get_schedule_month_from_sheet_c, extract_names_from_sheet_c
+import openpyxl
 from datetime import datetime, timedelta
 from pytz import timezone
 from google_auth_oauthlib.flow import Flow
@@ -11,13 +15,30 @@ from googleapiclient.discovery import build
 from dotenv import load_dotenv
 from calendar_utils.pick_up_events import pick_up_events
 from calendar_utils.delete_events import delete_events
+from werkzeug.utils import secure_filename
+from pdf_utils.pdf_parser import extract_names_from_pdf, get_schedule_month_from_pdf,extract_schedule_from_pdf
+from pdf_utils.pdf_parser_4llm import extract_schedule_from_markdown, extract_names_from_pdf_with_4llm, get_schedule_month_from_pdf_with_4llm
+from flask import Flask
+from flask_session import Session  # ← 追加
+
+app = Flask(__name__)
+
+# ---- Flask-Sessionの設定 ----
+app.config["SESSION_TYPE"] = "filesystem"  # サーバー側に保存
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_FILE_DIR"] = "flask_session"  # 保存先フォルダ（任意）
+app.config["SESSION_USE_SIGNER"] = True  # セキュリティ強化
+
+# ---- Sessionを初期化 ----
+Session(app)
+
 
 # 環境設定
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 load_dotenv()
 
-app = Flask(__name__)
+
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-for-local")
 
 UPLOAD_FOLDER = 'uploads'
@@ -35,94 +56,107 @@ CLIENT_SECRET_FILE = 'credentials.json'
 def index():
     return render_template("index.html")
 
-@app.route("/upload", methods=[ "GET","POST"])
+from werkzeug.utils import secure_filename
+
+@app.route("/upload", methods=["GET", "POST"])
 def upload_file():
+
+    def unique_filename(original_filename, tag):
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
+        name, ext = os.path.splitext(secure_filename(original_filename))
+        return f"{tag}_{timestamp}{ext}"
+
     if request.method == "POST":
-        file = request.files.get("file")
-        if file and file.filename.endswith(".xlsx"):
-            save_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-            file.save(save_path)
-            session['uploaded_file'] = save_path
-            names = extract_names_from_excel(save_path)
-            session['names'] = names
-            return render_template("select_name.html", names=names)
-        return "有効な .xlsx ファイルを選択してください。"
+        # 初期化
+        session.pop("names", None)
+        session.pop("year", None)
+        session.pop("month", None)
+
+
+        file_PDF_A = request.files.get("file_PDF_A")
+        path_PDF_A = None
+
+      
+
+        
+        # PDFファイルの処理（オプション）
+        # ファイルがアップロードされているか確認
+        if file_PDF_A and file_PDF_A.filename:
+            filename_PDF = unique_filename(file_PDF_A.filename, "PDF")
+            path_PDF_A= os.path.join(app.config['UPLOAD_FOLDER'], filename_PDF)
+            file_PDF_A.save(path_PDF_A)
+            session["file_PDF_A"] = path_PDF_A
+            print(f"[DEBUG] Uploaded PDF: {path_PDF_A}")
+        else:
+            session.pop("file_PDF_A", None)
+
+
+        # 職員名の抽出
+
+        if path_PDF_A:           
+            try:
+                names = extract_names_from_pdf(path_PDF_A)
+                print(f"[DEBUG] Extracted names from PDF: {names}")
+            except Exception as e:
+                return f"PDFから職員名の抽出に失敗しました: {e}", 400  
+        else:
+            return "勤務表が1つもアップロードされていません。", 400
+
+        return render_template("select_name.html", names=names)
+
+    # GET の場合：フォームを表示
     return render_template("upload.html")
 
-@app.route("/select", methods=["GET", "POST"])
+
+
+
+@app.route("/select", methods=["POST"])
 def select_name():
-    names = session.get("names", [])
-    if request.method == "POST":
-        selected_name = request.form["selected_name"]
-        session["selected_name"] = selected_name
-        return redirect(url_for("show_schedule"))
-    return render_template("select_name.html", names=names)
+    selected_name = request.form.get("selected_name")
+    if not selected_name:
+        return "職員名が選択されていません。", 400
+
+    session["selected_name"] = selected_name
+    return redirect(url_for("show_schedule"))
+
+
+
+
 
 @app.route("/schedule")
 def show_schedule():
-    filepath = session.get("uploaded_file")
+    print("[DEBUG] show_schedule called")
     selected_name = session.get("selected_name")
-    df = pd.read_excel(filepath, sheet_name="原本", header=None)
-    c1, j1 = df.iloc[0, 2], df.iloc[0, 9]
-    year, month = (c1.year if isinstance(c1, datetime) else int(c1)), (j1.month if isinstance(j1, datetime) else int(j1))
-    session['year'], session['month'] = year, month
-    name_rows = df.iloc[8:, :]
-    target_row = name_rows[name_rows.iloc[:, 2] == selected_name]
-    if target_row.empty:
-        return f"{selected_name} の勤務情報が見つかりませんでした"
+    file_pdf_A = session.get("file_PDF_A")
 
-    start_col, max_days = 9, 31
-    work_cells = target_row.iloc[0, start_col:start_col + max_days].tolist()
-    days = list(range(1, max_days + 1))
-    events, jst = [], timezone("Asia/Tokyo")
+    if not selected_name:
+        return render_template("error.html", message="職員名が未指定です。")
 
-    for i, cell in enumerate(work_cells):
-        if pd.isna(cell): continue
-        day = days[i]
-        try: date = datetime(year, month, day)
-        except ValueError: continue
+    html_events = []  # ← ★ HTML表示用イベント
 
-        cell = str(cell).strip()
-        if cell == "1": summary = "1st on call"
-        elif cell == "2": summary = "2nd on call"
-        elif cell == "⑯": summary = "当直"
-        elif cell == "年休": summary = "有給休暇"
-        elif cell in ["振休", "代休"]: summary = "振替休日"
-        elif cell == "ＡＭ休":
-            events.append({
-                "summary": "午後勤務（午前休）",
-                "start": {"dateTime": date.strftime("%Y-%m-%dT13:22:30"), "timeZone": "Asia/Tokyo"},
-                "end": {"dateTime": date.strftime("%Y-%m-%dT17:15:00"), "timeZone": "Asia/Tokyo"},
-                "description": "勤務予定"
-            })
-            continue
-        elif cell == "ＰＭ休":
-            events.append({
-                "summary": "午前勤務（午後休）",
-                "start": {"dateTime": date.strftime("%Y-%m-%dT08:30:00"), "timeZone": "Asia/Tokyo"},
-                "end": {"dateTime": date.strftime("%Y-%m-%dT12:22:30"), "timeZone": "Asia/Tokyo"},
-                "description": "勤務予定"
-            })
-            continue
-        elif cell == "早HD":
-            events.append({
-                "summary": "HD早番",
-                "start": {"dateTime": date.strftime("%Y-%m-%dT07:30:00"), "timeZone": "Asia/Tokyo"},
-                "end": {"dateTime": date.strftime("%Y-%m-%dT16:15:00"), "timeZone": "Asia/Tokyo"},
-                "description": "勤務予定"
-            })
-            continue
-        else: continue
+    # 勤務表PDFからのスケジュール抽出
+    if file_pdf_A:
+        try:
+            html_events_A = extract_schedule_from_markdown(file_pdf_A, selected_name)
 
-        events.append({
-            "summary": summary,
-            "start": {"date": date.strftime("%Y-%m-%d")},
-            "end": {"date": (date + timedelta(days=1)).strftime("%Y-%m-%d")},
-            "description": "勤務予定"
-        })
+            html_events.extend(html_events_A)
+            session["year_month_pdf_A"] = get_schedule_month_from_pdf(file_pdf_A)
+        except Exception as e:
+            return render_template("error.html", message=f"PDF解析中にエラー: {e}")
 
-    session["parsed_events"] = events
-    return render_template("show_schedule.html", name=selected_name, events=events)
+    # ★ HTML用イベントをセッションに保存
+    session["html_events"] = html_events
+    print("html_events:")
+    for i, ev in enumerate(html_events[:3]):
+        print(f"[DEBUG] html_events[{i}] type: {type(ev)}")
+        for key in ['date', 'start', 'end', 'summary', 'description']:
+            print(f"    {key}: {ev.get(key)} (type: {type(ev.get(key))})")
+        
+
+    return render_template("show_schedule.html", selected_name=selected_name, html_events=html_events)
+
+
+ 
 
 @app.route("/authorize")
 def authorize():
@@ -147,22 +181,76 @@ def oauth2callback():
 def delete_registered_events():
     credentials = dict_to_credentials(session.get("credentials"))
     service = build("calendar", "v3", credentials=credentials)
-    year, month, name = session.get("year"), session.get("month"), session.get("selected_name")
-    deleted_events = pick_up_events(service, calendar_id='primary', year=year, month=month, tag="勤務予定")
-    session['deleted_events'] = deleted_events
-    delete_events(service, calendar_id='primary', events=deleted_events)
+
+    all_events_to_delete = []  # ← 全ての削除対象をここに集約
+
+    # ===== PDF勤務表MAIN =====
+    file_pdf_A = session.get("file_PDF_A")
+    if file_pdf_A:
+        year_month_pdf_A = session.get("year_month_pdf_A", (None, None))
+        if all(year_month_pdf_A):
+            year, month = year_month_pdf_A
+            events_to_delete_pdf_A= pick_up_events(
+                service,
+                calendar_id="primary",
+                year=year,
+                month=month,
+                tag="MAIN"
+            )
+            print(f"[DEBUG] PDF(MAIN)から {len(events_to_delete_pdf_A)} 件削除予定")
+            all_events_to_delete.extend(events_to_delete_pdf_A)
+            print(f"[DEBUG] 全消去リスト: {len(all_events_to_delete)}")
+
+    # ===== セッション保存・一括削除 =====
+    # 削除対象を先に保存（必要なら .copy() で保護）
+    #htmlで表示させるためにコピーしておく
+    session["deleted_events"] = all_events_to_delete.copy()
+
+    # 実際にall_events_to_deleteが削除される
+    delete_events(service, calendar_id="primary", events=all_events_to_delete)
+
     return redirect(url_for("upload_to_calendar"))
+
+
 
 @app.route("/upload_to_calendar")
 def upload_to_calendar():
     credentials = dict_to_credentials(session.get("credentials"))
     service = build("calendar", "v3", credentials=credentials)
-    events_to_add = session.get("parsed_events")
-    for ev in events_to_add:
-        service.events().insert(calendarId="primary", body=ev).execute()
-    name = session.get("selected_name")
+
+    html_events = session.get("html_events", [])  # HTML表示用イベント
+    selected_name = session.get("selected_name")
     deleted_events = session.get("deleted_events", [])
-    return render_template("result.html", name=name, added_events=events_to_add, deleted_events=deleted_events)
+
+    # Google Calendarへイベント登録
+
+    for event in html_events:
+        service.events().insert(calendarId="primary", body=event).execute()
+
+
+
+    print("[DEBUG] deleted_events type:", type(deleted_events))  # listであるべき
+    print("[DEBUG] deleted_events（簡略版）:")
+    for i, ev in enumerate(deleted_events[:3]):
+        print(f"[DEBUG] deleted_events[{i}] type: {type(ev)}")
+        for key in ['date', 'start', 'end', 'summary', 'description']:
+            print(f"    {key}: {ev.get(key)} (type: {type(ev.get(key))})")
+    
+    # セッションからPDFファイルを削除
+    # ここでPDFファイルを削除する
+    path_PDF_A = session.get("file_PDF_A")
+    os.remove(path_PDF_A)
+    session.pop("file_PDF_A", None)
+    print(f"[DEBUG] PDFファイル {path_PDF_A} を削除しました。")
+
+
+    return render_template(
+        "result.html",
+        selected_name=selected_name,
+        html_events=html_events,
+        deleted_events=deleted_events,
+        
+    )
 
 def credentials_to_dict(credentials):
     return {

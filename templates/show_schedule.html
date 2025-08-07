@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ name }} の勤務予定</title>
+  <title>{{ selected_name }} の勤務予定</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body class="bg-light">
@@ -13,32 +13,36 @@
       <div class="col-md-8">
         <div class="card shadow">
           <div class="card-header bg-success text-white text-center">
-            <h3 class="mb-0">{{ name }} の勤務予定</h3>
-          <div class="alert alert-warning text-dark">
+            <h3 class="mb-0">{{ selected_name }} の勤務予定</h3>
+            <div class="alert alert-warning text-dark mt-3 mb-0">
               ※この月のすでに登録済み勤務予定は削除され、再登録されます。
-          </div>
-
-
+            </div>
           </div>
           <div class="card-body">
-            <ul class="list-group">
-              {% for event in events %}
-                <li class="list-group-item">
-                  {% if event.summary == "午後勤務（午前休）" %}
-                    {{ event.start.dateTime[:10] }} {{ event.start.dateTime[11:19] }} - 
-                    {{ event.end.dateTime[11:19] }}：午後勤務（午前休）
-                  {% elif event.summary == "午前勤務（午後休）" %}
-                    {{ event.start.dateTime[:10] }} {{ event.start.dateTime[11:19] }} - 
-                    {{ event.end.dateTime[11:19] }}：午前勤務（午後休）
-                  {% elif event.summary == "HD早番" %}
-                    {{ event.start.dateTime[:10] }} {{ event.start.dateTime[11:19] }} - 
-                    {{ event.end.dateTime[11:19] }}：HD早番
-                  {% else %}
-                    {{ event.start.date }}：{{ event.summary }}
-                  {% endif %}
-                </li>
-              {% endfor %}
-            </ul>
+            {% if html_events %}
+              <ul class="list-group">
+                {% for event in html_events %}
+                  <li class="list-group-item">
+                    {% if event.start %}
+                        {% if event.start.dateTime %}
+                            {{ event.start.dateTime}}～{{ event.end.dateTime}}：{{ event.summary }}
+                        {% elif event.start.date %}
+                            {{ event.start.date }}：{{ event.summary }}
+                        {% else %}
+                            日付不明：{{ event.summary }}
+                        {% endif %}
+                    {% else %}
+                        日付不明：{{ event.summary }}
+                    {% endif %}
+                    {% if event.description %}
+                        <br><small class="text-muted">{{ event.description }}</small>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p>勤務予定は見つかりませんでした。</p>
+            {% endif %}
 
             <div class="text-center mt-4">
               <a href="{{ url_for('authorize') }}" class="btn btn-success">
