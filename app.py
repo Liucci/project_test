@@ -244,6 +244,7 @@ def upload_to_calendar():
     print(f"[DEBUG] PDFファイル {path_PDF_A} を削除しました。")
 
 
+
     return render_template(
         "result.html",
         selected_name=selected_name,
