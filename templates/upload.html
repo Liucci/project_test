@@ -24,10 +24,17 @@
                         </div>
                         {% endif %}
                         <form method="POST" enctype="multipart/form-data" action="/upload">
+                            <!-- 勤務表A -->
                             <div class="mb-3">
-                                <label for="file_PDF_A" class="form-label">勤務表=MAIN PDF を選択</label>
+                                <label for="file_PDF_A" class="form-label">勤務表を選択</label>
                                 <input class="form-control" type="file" name="file_PDF_A" id="file_PDF_A" accept=".pdf" />
                             </div>
+                            <!-- 勤務表B -->
+                            <div class="mb-3">
+                                <label for="file_PDF_B" class="form-label">血液浄化センター勤務表を選択</label>
+                                <input class="form-control" type="file" name="file_PDF_B" id="file_PDF_B" accept=".pdf" />
+                            </div>
+
                             <div class="text-center">
                                 <button type="submit" class="btn btn-primary">アップロード開始</button>
                             </div>
