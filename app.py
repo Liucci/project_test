@@ -12,9 +12,9 @@ from dotenv import load_dotenv
 from calendar_utils.pick_up_events import pick_up_events
 from calendar_utils.delete_events import delete_events
 from werkzeug.utils import secure_filename
-from pdf_utils.pdf_parser import extract_names_from_pdf, get_schedule_month_from_pdf,extract_schedule_from_pdf
+from pdf_utils.pdf_parser import extract_names_from_PDF_A, get_schedule_month_from_PDF_A,extract_schedule_from_PDF_A
 from pdf_utils.pdf_parser_4llm import extract_schedule_from_markdown, extract_names_from_pdf_with_4llm, get_schedule_month_from_pdf_with_4llm
-from pdf_utils.pdf_parser_B import extract_HD_schedule_from_pdf,extract_name_from_PDF,extract_month_from_PDF
+from pdf_utils.pdf_parser_B import extract_HD_schedule_from_PDF_B,extract_names_from_PDF_B,extract_month_from_PDF_B
 from flask import Flask
 from flask_session import Session  # ← 追加
 
@@ -114,7 +114,7 @@ def upload_file():
 
         if path_PDF_A:           
             try:
-                names = extract_names_from_pdf(path_PDF_A)
+                names = extract_names_from_PDF_A(path_PDF_A)
                 print("職員名")
                 for a in names:
                     print("・", a)
@@ -122,7 +122,7 @@ def upload_file():
                 return render_template("error.html", message="勤務表から職員名簿作成失敗") 
         elif path_PDF_B:
             try:
-                names=extract_name_from_PDF(path_PDF_B)
+                names=extract_names_from_PDF_B(path_PDF_B)
                 print("職員名")
                 for a in names:
                     print("・", a)
@@ -171,15 +171,15 @@ def show_schedule():
         try:
             html_events_A = extract_schedule_from_markdown(path_PDF_A, selected_name)
             html_events.extend(html_events_A)
-            session["year_month_pdf_A"] = get_schedule_month_from_pdf(path_PDF_A)
+            session["year_month_pdf_A"] = get_schedule_month_from_PDF_A(path_PDF_A)
         except Exception as e:
             return render_template("error.html", message=f"PDF解析中にエラー: {e}")
 
     if path_PDF_B:
         try:
-            html_events_B = extract_HD_schedule_from_pdf(path_PDF_B,year_B, selected_name,y_tolerance=5)
+            html_events_B = extract_HD_schedule_from_PDF_B(path_PDF_B,year_B, selected_name,y_tolerance=5)
             html_events.extend(html_events_B)
-            session["month_B"]=extract_month_from_PDF(path_PDF_B)#eventをdeleteするときに年月が必要、年と月別のほうがpick_eventsに渡しやすい
+            session["month_B"]=extract_month_from_PDF_B(path_PDF_B)#eventをdeleteするときに年月が必要、年と月別のほうがpick_eventsに渡しやすい
         except Exception as e:
             return render_template("error.html", message=f"血液浄化センター勤務表解析中にエラー: {e}")
 
@@ -215,7 +215,7 @@ def oauth2callback():
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
     session["credentials"] = credentials_to_dict(credentials)
-    return redirect(url_for("delete_registered_events"))
+    return render_template("upload.html")
 
 @app.route("/delete_registered_events")
 def delete_registered_events():

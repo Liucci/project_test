@@ -3,8 +3,8 @@ import re
 from datetime import datetime, timedelta
 import unicodedata
 
-def extract_text(pdf_path):
-    doc = fitz.open(pdf_path)
+def extract_text(PDF_path):
+    doc = fitz.open(PDF_path)
     text = ""
     for page in doc:
         text += page.get_text()
@@ -12,13 +12,13 @@ def extract_text(pdf_path):
 
 import fitz  # PyMuPDF
 
-def find_word_positions(pdf_path, keyword,search_height=200):
+def find_word_positions(PDF_path, keyword,search_height=200):
     """
     PDF内の指定文字の座標(x0, y0, x1, y1)をすべて返す。
     戻り値はページごとのリスト: [(page_num, x0, y0, x1, y1), ...]
     """
     # PDFを開いてテキスト化する
-    doc = fitz.open(pdf_path)
+    doc = fitz.open(PDF_path)
     positions = []
 
     for page_num, page in enumerate(doc, start=1):
@@ -31,11 +31,11 @@ def find_word_positions(pdf_path, keyword,search_height=200):
     return positions
 
 
-def extract_text_in_xrange(pdf_path,  x_min, x_max,page_num=1,):
+def extract_text_in_xrange(PDF_path,  x_min, x_max,page_num=1,):
     """
     指定ページの指定x範囲にあるテキストを、上から順に返す。
     """
-    doc = fitz.open(pdf_path)
+    doc = fitz.open(PDF_path)
     page = doc[page_num - 1]
 
     words = page.get_text("words")
@@ -51,23 +51,23 @@ def extract_text_in_xrange(pdf_path,  x_min, x_max,page_num=1,):
 
 
 # 指定キーワードの列を抽出し、個々のy座標を取得
-def extract_column_and_yrange_from_pdf(pdf_path,keyword,range=30):
+def extract_column_and_yrange_from_PDF_B(PDF_path,keyword,range=30):
     
-    find_column= find_word_positions(pdf_path,keyword, search_height=200)
+    find_column= find_word_positions(PDF_path,keyword, search_height=200)
     print(f"[DEBUG] {keyword} 文字の座標: {find_column}")  # デバッグ用
     x = find_column[0][1]  # keywordのx座標を取得
     x_min=x- range
     x_max=x+ range
-    target_column=extract_text_in_xrange(pdf_path, x_min, x_max, page_num=1)
+    target_column=extract_text_in_xrange(PDF_path, x_min, x_max, page_num=1)
     target_column = [item for item in target_column if item['text'] != keyword]
     print(f"[DEBUG] {keyword} 列のテキスト: {target_column}")  # デバッグ用
     return target_column
 
 #HD早出勤務表の抽出用関数
-def extract_HD_schedule_from_pdf(pdf_path,year, selected_name,y_tolerance=5):
+def extract_HD_schedule_from_PDF_B(PDF_path,year, selected_name,y_tolerance=5):
 
-    date_column = extract_column_and_yrange_from_pdf(pdf_path, "日付", range=40)
-    name_column = extract_column_and_yrange_from_pdf(pdf_path, "早出")
+    date_column = extract_column_and_yrange_from_PDF_B(PDF_path, "日付", range=40)
+    name_column = extract_column_and_yrange_from_PDF_B(PDF_path, "早出")
 
     print(f"[DEBUG] 日付列: {date_column}")  # デバッグ用
     print(f"[DEBUG] 早出列: {name_column}")  # デバッグ用
@@ -140,9 +140,9 @@ def extract_HD_schedule_from_pdf(pdf_path,year, selected_name,y_tolerance=5):
     return HD_schedule
 
 #file_PDF_Bから名前だけ取り出す関数
-def extract_name_from_PDF(pdf_path): 
+def extract_names_from_PDF_B(PDF_path): 
 
-    name_column = extract_column_and_yrange_from_pdf(pdf_path, "早出")
+    name_column = extract_column_and_yrange_from_PDF_B(PDF_path, "早出")
     name_list=[]
     seen = set()
     for n in name_column:
@@ -155,8 +155,8 @@ def extract_name_from_PDF(pdf_path):
         print("・", a)
     return name_list
 
-def extract_month_from_PDF(pdf_path):
-    date_column = extract_column_and_yrange_from_pdf(pdf_path, "日付", range=40)
+def extract_month_from_PDF_B(PDF_path):
+    date_column = extract_column_and_yrange_from_PDF_B(PDF_path, "日付", range=40)
     date = date_column[0].get("text") 
     month=date[0] #dateの1文字目を取得
     print(f"month:{month}")
@@ -179,9 +179,9 @@ if __name__ == "__main__":
 
     test_name="町田 つばさ"
     print("📄 [TEST] ファイル:", test_path)
-    extract_HD_schedule_from_pdf(test_path,year,test_name)
-    extract_name_from_PDF(test_path)
-    extract_month_from_PDF(test_path)
+    extract_HD_schedule_from_PDF_B(test_path,year,test_name)
+    #extract_names_from_PDF_B(test_path)
+    #extract_month_from_PDF_B(test_path)
     
     
     try:
