@@ -13,7 +13,7 @@ def extract_text(pdf_path):
         text += page.get_text()
     return text
 
-def extract_names_from_pdf(pdf_path):
+def extract_names_from_PDF_A(pdf_path):
     text = extract_text(pdf_path)
 
     # 漢字・ひらがな・長音符号（ー）を許容
@@ -57,7 +57,7 @@ def extract_text_top_area(pdf_path, height_ratio=0.1):
 
     return "\n".join(texts)
 
-def get_schedule_month_from_pdf(pdf_path):
+def get_schedule_month_from_PDF_A(pdf_path):
     text = extract_text_top_area(pdf_path, height_ratio=0.15)  # 上部15%を抽出
 
     # 例：「2025 年 8 月」や「2025年8月」の形式を想定
@@ -81,10 +81,10 @@ def find_date_row_only(lines):
 
 
 
-def extract_schedule_from_pdf(pdf_path, staff_name):
+def extract_schedule_from_PDF_A(pdf_path, staff_name):
     text = extract_text(pdf_path)
     lines = text.splitlines()
-    year, month = get_schedule_month_from_pdf(pdf_path)
+    year, month = get_schedule_month_from_PDF_A(pdf_path)
 
     # 日付行の取得（曜日行は使わない）
     date_row = find_date_row_only(lines)
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     try:
         # 年月抽出テスト
-        year, month = get_schedule_month_from_pdf(test_path)
+        year, month = get_schedule_month_from_PDF_A(test_path)
         print(f"✅ 年月抽出: {year}年 {month}月")
 
         # 職員名一覧抽出テスト
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         if names:
             test_name = names[1]
             print(f"\n📆 {test_name} の勤務予定を抽出中...")
-            work_days = extract_schedule_from_pdf(test_path, test_name)
+            work_days = extract_schedule_from_PDF_A(test_path, test_name)
         else:
             print("⚠ 職員名が1人も見つかりませんでした。")
 
