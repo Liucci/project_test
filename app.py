@@ -20,6 +20,7 @@ from flask_session import Session  # ← 追加
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
+
 # ---- Flask-Sessionの設定 ----
 app.config["SESSION_TYPE"] = "filesystem"  # サーバー側に保存
 app.config["SESSION_PERMANENT"] = False
