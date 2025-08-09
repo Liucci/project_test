@@ -2,15 +2,7 @@
 
 from flask import Flask, request, render_template, redirect, url_for, session
 import os, pandas as pd
-<<<<<<< HEAD
-
-from excel_utils.excel_parserA import parse_schedule_from_sheet_a,get_schedule_month_from_sheet_a, extract_names_from_sheet_a
-from excel_utils.excel_parserB import parse_schedule_from_sheet_b,get_schedule_month_from_sheet_b, extract_names_from_sheet_b
-from excel_utils.excel_parserC import parse_schedule_from_sheet_c,get_schedule_month_from_sheet_c, extract_names_from_sheet_c
-import openpyxl
-=======
 import re
->>>>>>> feature/pdf-cleanup
 from datetime import datetime, timedelta
 from pytz import timezone
 from google_auth_oauthlib.flow import Flow
@@ -142,12 +134,8 @@ def upload_file():
                 return render_template("error.html", message="血液浄化センター勤務表から職員名簿作成失敗")
         
         else:
-<<<<<<< HEAD
-            return "勤務表が1つもアップロードされていません。", 400
-=======
             return render_template("error.html",messeage="勤務表が1つもアップロードされていません")
         
->>>>>>> feature/pdf-cleanup
 
         session["names"]=names
         return render_template("select_name.html", names=names)
@@ -156,31 +144,18 @@ def upload_file():
     return render_template("upload.html")
 
 
-<<<<<<< HEAD
-
-
-@app.route("/select", methods=["POST"])
-=======
 @app.route("/select", methods=["POST","GET"])
->>>>>>> feature/pdf-cleanup
 def select_name():
     if request.method == "POST":
         selected_name = request.form.get("selected_name")
         if not selected_name:
             return "職員名が選択されていません。", 400
 
-<<<<<<< HEAD
-
-
-
-
-=======
         session["selected_name"] = selected_name
         return redirect(url_for("show_schedule"))
     else:
         names=session.get("names")
         return render_template("select_name.html",names=names)
->>>>>>> feature/pdf-cleanup
 @app.route("/schedule")
 def show_schedule():
     print("[DEBUG] show_schedule called")
@@ -243,11 +218,7 @@ def oauth2callback():
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
     session["credentials"] = credentials_to_dict(credentials)
-<<<<<<< HEAD
-    return redirect(url_for("delete_registered_events"))
-=======
     return render_template("upload.html")
->>>>>>> feature/pdf-cleanup
 
 @app.route("/delete_registered_events")
 def delete_registered_events():
@@ -297,9 +268,6 @@ def delete_registered_events():
 
     return redirect(url_for("upload_to_calendar"))
 
-<<<<<<< HEAD
-
-=======
 @app.route("/delete_events_specificed_term",methods=["POST"])
 def delete_events_specificed_term():
     credentials = dict_to_credentials(session.get("credentials"))
@@ -317,7 +285,6 @@ def delete_events_specificed_term():
     
     delete_events(service, calendar_id="primary", events=events_to_delete_specificed_term)
     return render_template("result2.html",deleted_events=events_to_delete_specificed_term,selected_year=selected_year,selected_month=selected_month)
->>>>>>> feature/pdf-cleanup
 
 @app.route("/upload_to_calendar")
 def upload_to_calendar():
