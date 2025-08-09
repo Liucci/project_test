@@ -1,7 +1,12 @@
 Flask
+Flask-Session
 pandas
 openpyxl
 google-api-python-client
 google-auth
 google-auth-oauthlib
 python-dotenv
+re
+pymupdf4llm
+fitz
+pytz

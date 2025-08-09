@@ -141,7 +141,7 @@ if __name__ == "__main__":
         print(f"✅ 年月抽出: {year}年 {month}月")
 
         # 職員名一覧抽出テスト
-        names = extract_names_from_pdf(test_path)
+        names = extract_names_from_PDF_A(test_path)
         print("✅ 抽出された職員名一覧:")
         for name in names:
             print("・", name)
