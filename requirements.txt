@@ -7,5 +7,4 @@ google-auth
 google-auth-oauthlib
 python-dotenv
 pymupdf4llm
-fitz
 pytz
