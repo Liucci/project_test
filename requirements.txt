@@ -6,7 +6,6 @@ google-api-python-client
 google-auth
 google-auth-oauthlib
 python-dotenv
-re
 pymupdf4llm
 fitz
 pytz
