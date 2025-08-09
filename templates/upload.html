@@ -36,7 +36,7 @@
                             </div>
 
                             <div class="text-center">
-                                <button type="submit" class="btn btn-primary">アップロード開始</button>
+                                <button type="submit" class="btn btn-success">アップロード開始</button>
                             </div>
                         </form>
                     </div>
@@ -69,10 +69,15 @@
                             </div>
                         </div>
                         <div class="text-center">
-                            <button type="submit" class="btn btn-primary">予定を削除する</button>
+                            <button type="submit" class="btn btn-success">予定を削除する</button>
                         </div>
                         </form>
                     </div>
+                </div>
+                <div class="text-center mt-3">
+                        <form action="{{ url_for('logout') }}" method="get" style="display:inline;">
+                            <button type="submit" class="btn btn-success">ログアウト</button>
+                        </form>
                 </div>
 
             </div>

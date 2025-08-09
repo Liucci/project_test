@@ -25,9 +25,14 @@
                             </select>
                         </div>
                         <div class="text-center">
-                            <button type="submit" class="btn btn-primary">勤務予定を表示</button>
+                            <button type="submit" class="btn btn-success">勤務予定を表示</button>
                         </div>
                     </form>
+                    <div class="text-center mt-3">
+                            <a href="{{ url_for('upload_file') }}" class="btn btn-success">
+                                ファイル選択画面に戻る
+                            </a>
+                    </div>
                 </div>
             </div>
         </div>

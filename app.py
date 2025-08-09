@@ -17,7 +17,7 @@ from pdf_utils.pdf_parser_4llm import extract_schedule_from_markdown, extract_na
 from pdf_utils.pdf_parser_B import extract_HD_schedule_from_PDF_B,extract_names_from_PDF_B,extract_month_from_PDF_B
 from flask import Flask
 from flask_session import Session  # ← 追加
-
+from werkzeug.utils import secure_filename
 app = Flask(__name__)
 
 # ---- Flask-Sessionの設定 ----
@@ -53,7 +53,7 @@ CLIENT_SECRET_FILE = 'credentials.json'
 def index():
     return render_template("index.html")
 
-from werkzeug.utils import secure_filename
+
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
@@ -69,11 +69,11 @@ def upload_file():
         session.pop("year", None)
         session.pop("month", None)
 
-
+        #各ファイルをhtmlから受け取りre-name前の名前をsessionに保存
         file_PDF_A = request.files.get("file_PDF_A")
-        path_PDF_A = None
+        session["file_name_PDF_A_origin"]=file_PDF_A.filename
         file_PDF_B = request.files.get("file_PDF_B")
-        path_PDF_B = None
+        session["file_name_PDF_B_origin"]=file_PDF_B.filename
 
       
         # 年の抽出（ファイル名から）
@@ -96,7 +96,9 @@ def upload_file():
             session["path_PDF_A"] = path_PDF_A
             print(f"[DEBUG] Uploaded PDF: {path_PDF_A}")
         else:
-            session.pop("path_PDF_A", None)
+            path_PDF_A=None
+            session["path_PDF_A"]=path_PDF_A
+            
 
         if file_PDF_B and file_PDF_B.filename:
             filename_PDF = unique_filename(file_PDF_B.filename, "PDF")
@@ -105,7 +107,9 @@ def upload_file():
             session["path_PDF_B"] = path_PDF_B
             print(f"[DEBUG] Uploaded PDF: {path_PDF_B}")
         else:
-            session.pop("path_PDF_B", None)
+            path_PDF_B=None
+            session["path_PDF_B"]=path_PDF_B
+            
 
 
 
@@ -130,29 +134,28 @@ def upload_file():
                 return render_template("error.html", message="血液浄化センター勤務表から職員名簿作成失敗")
         
         else:
-            return "勤務表が1つもアップロードされていません。", 400
+            return render_template("error.html",messeage="勤務表が1つもアップロードされていません")
+        
 
+        session["names"]=names
         return render_template("select_name.html", names=names)
 
     # GET の場合：フォームを表示
     return render_template("upload.html")
 
 
-
-
-@app.route("/select", methods=["POST"])
+@app.route("/select", methods=["POST","GET"])
 def select_name():
-    selected_name = request.form.get("selected_name")
-    if not selected_name:
-        return "職員名が選択されていません。", 400
+    if request.method == "POST":
+        selected_name = request.form.get("selected_name")
+        if not selected_name:
+            return "職員名が選択されていません。", 400
 
-    session["selected_name"] = selected_name
-    return redirect(url_for("show_schedule"))
-
-
-
-
-
+        session["selected_name"] = selected_name
+        return redirect(url_for("show_schedule"))
+    else:
+        names=session.get("names")
+        return render_template("select_name.html",names=names)
 @app.route("/schedule")
 def show_schedule():
     print("[DEBUG] show_schedule called")
@@ -265,7 +268,23 @@ def delete_registered_events():
 
     return redirect(url_for("upload_to_calendar"))
 
-
+@app.route("/delete_events_specificed_term",methods=["POST"])
+def delete_events_specificed_term():
+    credentials = dict_to_credentials(session.get("credentials"))
+    service = build("calendar", "v3", credentials=credentials)
+    selected_year = int(request.form.get("year"))
+    selected_month= int(request.form.get("month"))
+    events_to_delete_specificed_term= pick_up_events(
+                service,
+                calendar_id="primary",
+                year=selected_year,
+                month=selected_month,
+                tag="HD" or "MAIN"
+            )
+    session["deleted_events"] = events_to_delete_specificed_term.copy()
+    
+    delete_events(service, calendar_id="primary", events=events_to_delete_specificed_term)
+    return render_template("result2.html",deleted_events=events_to_delete_specificed_term,selected_year=selected_year,selected_month=selected_month)
 
 @app.route("/upload_to_calendar")
 def upload_to_calendar():
@@ -292,11 +311,19 @@ def upload_to_calendar():
     
     # セッションからPDFファイルを削除
     # ここでPDFファイルを削除する
-    path_PDF_A = session.get("file_PDF_A")
-    os.remove(path_PDF_A)
-    session.pop("file_PDF_A", None)
-    print(f"[DEBUG] PDFファイル {path_PDF_A} を削除しました。")
 
+    path_PDF_A = session.get("path_PDF_A")
+    if path_PDF_A: 
+        os.remove(path_PDF_A)
+        session.pop("path_PDF_A", None)
+        print(f"[DEBUG] PDFファイル {path_PDF_A} を削除しました。")
+
+    path_PDF_B = session.get("path_PDF_B")
+    if path_PDF_B: 
+        os.remove(path_PDF_B)
+        session.pop("path_PDF_A", None)
+        print(f"[DEBUG] PDFファイル {path_PDF_B} を削除しました。")
+    
 
 
     return render_template(
@@ -306,6 +333,11 @@ def upload_to_calendar():
         deleted_events=deleted_events,
         
     )
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
 
 def credentials_to_dict(credentials):
     return {
@@ -319,6 +351,7 @@ def credentials_to_dict(credentials):
 
 def dict_to_credentials(d):
     return Credentials(**d)
+
 
 
 
