@@ -3,6 +3,7 @@
 from flask import Flask, request, render_template, redirect, url_for, session
 import os, pandas as pd
 import re
+import uuid
 from datetime import datetime, timedelta,date
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
@@ -58,22 +59,29 @@ def index():
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
-    session.pop("path_PDA_A", None)
-    session.pop("path_PDA_B", None)
-    session.pop("names", None)
-    session.pop("year_month_pdf_A",None)
-    session.pop("year_B", None)
-    session.pop("month_B", None)
+    # セッションからPDFファイルを削除
+    # 残っているPDFファイルを削除する
+    delete_upload_file("path_PDF_A")
+    delete_upload_file("path_PDF_B")
+    delete_session_keys("names",
+                        "year_month_pdf_A",
+                        "year_B",
+                        "month_B",
+                        "file_name_PDF_A_origin",
+                        "file_name_PDF_B_origin",
+                        "selected_name",
+                        "deleted_events",
+                        "html_events"
+                        )
+
 
     def unique_filename(original_filename, tag):
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
+        random_str = uuid.uuid4().hex[:8]  # 8桁ランダムID
         name, ext = os.path.splitext(secure_filename(original_filename))
-        return f"{tag}_{timestamp}{ext}"
-
+        return f"{tag}_{timestamp}_{random_str}{ext}"
+    
     if request.method == "POST":
-        # 初期化
-
-
         #各ファイルをhtmlから受け取りre-name前の名前をsessionに保存
         file_PDF_A = request.files.get("file_PDF_A")
         session["file_name_PDF_A_origin"]=file_PDF_A.filename
@@ -99,7 +107,7 @@ def upload_file():
             path_PDF_A= os.path.join(app.config['UPLOAD_FOLDER'], filename_PDF)
             file_PDF_A.save(path_PDF_A)
             session["path_PDF_A"] = path_PDF_A
-            print(f"[DEBUG] Uploaded PDF: {path_PDF_A}")
+            print(f"[DEBUG] Uploaded PDF_A: {path_PDF_A}")
         else:
             path_PDF_A=None
             session["path_PDF_A"]=path_PDF_A
@@ -110,7 +118,7 @@ def upload_file():
             path_PDF_B= os.path.join(app.config['UPLOAD_FOLDER'], filename_PDF)
             file_PDF_B.save(path_PDF_B)
             session["path_PDF_B"] = path_PDF_B
-            print(f"[DEBUG] Uploaded PDF: {path_PDF_B}")
+            print(f"[DEBUG] Uploaded PDF_B: {path_PDF_B}")
         else:
             path_PDF_B=None
             session["path_PDF_B"]=path_PDF_B
@@ -187,9 +195,9 @@ def show_schedule():
     if path_PDF_B:
         try:
             html_events_B = extract_HD_schedule_from_PDF_B(path_PDF_B,year_B, selected_name,y_tolerance=5)
+            session["month_B"]=extract_month_from_PDF_B(path_PDF_B)#eventをdeleteするときに年月が必要、年と月別のほうがpick_eventsに渡しやすい
             if html_events_B is not None and html_events_B:
                 html_events.extend(html_events_B)
-                session["month_B"]=extract_month_from_PDF_B(path_PDF_B)#eventをdeleteするときに年月が必要、年と月別のほうがpick_eventsに渡しやすい
                 
         except Exception as e:
             return render_template("error_back_to_upload.html", message=f"血液浄化センター勤務表解析中にエラー: {e}")
@@ -250,6 +258,10 @@ def delete_registered_events():
     path_PDF_B=session.get("path_PDF_B")
     all_events_to_delete = []  # ← 全ての削除対象をここに集約
     print("[DEBUG] path_PDF_B repr:", repr(path_PDF_B), type(path_PDF_B))
+    year_B=session.get("year_B")
+    month_B=session.get("month_B")  
+    print(f"year_B:\n{year_B}")
+    print(f"month_B:\n{month_B}")
 
     
     
@@ -336,18 +348,8 @@ def upload_to_calendar():
     
     # セッションからPDFファイルを削除
     # ここでPDFファイルを削除する
-
-    path_PDF_A = session.get("path_PDF_A")
-    if path_PDF_A: 
-        os.remove(path_PDF_A)
-        session.pop("path_PDF_A", None)
-        print(f"[DEBUG] PDFファイル {path_PDF_A} を削除しました。")
-
-    path_PDF_B = session.get("path_PDF_B")
-    if path_PDF_B: 
-        os.remove(path_PDF_B)
-        session.pop("path_PDF_A", None)
-        print(f"[DEBUG] PDFファイル {path_PDF_B} を削除しました。")
+    delete_upload_file("path_PDF_A")
+    delete_upload_file("path_PDF_B")
     
 
 
@@ -365,18 +367,6 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
-def credentials_to_dict(credentials):
-    return {
-        'token': credentials.token,
-        'refresh_token': credentials.refresh_token,
-        'token_uri': credentials.token_uri,
-        'client_id': credentials.client_id,
-        'client_secret': credentials.client_secret,
-        'scopes': credentials.scopes
-    }
-
-def dict_to_credentials(d):
-    return Credentials(**d)
 
 
 
@@ -396,6 +386,44 @@ def about():
 @app.route("/contact")
 def contact():
     return render_template("contact.html")
+
+
+def credentials_to_dict(credentials):
+    return {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes
+    }
+
+def dict_to_credentials(d):
+    return Credentials(**d)
+
+#file_pathとsession内のfile_pathも消す関数
+def delete_upload_file(session_key):
+    file_path = session.get(session_key)
+    if file_path:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"[DEBUG] PDFファイル {file_path} を削除しました。")
+        else:
+            print(f"[DEBUG] PDFファイル {file_path} は存在しませんでした。")
+        session.pop(session_key, None)
+        print(f"[DEBUG] session の {session_key} を削除しました。")
+    else:
+        print(f"[DEBUG] session に {session_key} の情報がありません。")
+
+#session消す関数
+def delete_session_keys(*keys):
+    for key in keys:
+        session.pop(key, None)
+    
+    print("削除したsession key")
+    for a in keys:
+        print(f"・{a}")
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

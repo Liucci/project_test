@@ -10,8 +10,6 @@ def extract_text(PDF_path):
         text += page.get_text()
     return text
 
-import fitz  # PyMuPDF
-
 def find_word_positions(PDF_path, keyword,search_height=200):
     """
     PDF内の指定文字の座標(x0, y0, x1, y1)をすべて返す。
@@ -179,8 +177,8 @@ if __name__ == "__main__":
 
     test_name="町田 つばさ"
     print("📄 [TEST] ファイル:", test_path)
-    extract_HD_schedule_from_PDF_B(test_path,year,test_name)
-    #extract_names_from_PDF_B(test_path)
+    #extract_HD_schedule_from_PDF_B(test_path,year,test_name)
+    extract_names_from_PDF_B(test_path)
     #extract_month_from_PDF_B(test_path)
     
     

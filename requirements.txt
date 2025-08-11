@@ -1,11 +1,9 @@
 Flask
 Flask-Session
 pandas
-openpyxl
 google-api-python-client
 google-auth
 google-auth-oauthlib
 python-dotenv
-pymupdf4llm
 pytz
 PyMuPDF
