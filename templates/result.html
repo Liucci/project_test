@@ -57,7 +57,7 @@
                 <li class="list-group-item">
                     {% if event.start %}
                         {% if event.start.dateTime %}
-                            {{ event.start.dateTime}}：<strong>{{ event.summary }}</strong>
+                            {{ event.start.dateTime}}～{{ event.end.dateTime}}：<strong>{{ event.summary }}</strong>
                         {% elif event.start.date %}
                             {{ event.start.date }}：<strong>{{ event.summary }}</strong>
                         {% else %}

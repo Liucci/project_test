@@ -70,7 +70,10 @@ def upload_file():
                         "file_name_PDF_B_origin",
                         "selected_name",
                         "deleted_events",
-                        "html_events"
+                        "html_events",
+                        "year",
+                        "month",
+                        "tags"
                         )
 
 
