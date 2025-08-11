@@ -179,8 +179,8 @@ if __name__ == "__main__":
 
     test_name="町田 つばさ"
     print("📄 [TEST] ファイル:", test_path)
-    extract_HD_schedule_from_PDF_B(test_path,year,test_name)
-    #extract_names_from_PDF_B(test_path)
+    #extract_HD_schedule_from_PDF_B(test_path,year,test_name)
+    extract_names_from_PDF_B(test_path)
     #extract_month_from_PDF_B(test_path)
     
     
