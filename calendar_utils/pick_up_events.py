@@ -1,7 +1,7 @@
 from googleapiclient.discovery import Resource
 from typing import List
 from datetime import datetime, timezone
-def pick_up_events(service: Resource, calendar_id: str, year: int, month: int, tag: str = None) -> List[dict]:
+def pick_up_events(service: Resource, calendar_id: str, year: int, month: int, tags: List[str] = None):
     """
     指定年月とタグで予定を抽出
     :param service: Google Calendar API サービス
@@ -28,15 +28,22 @@ def pick_up_events(service: Resource, calendar_id: str, year: int, month: int, t
     ).execute()
 
     events = events_result.get('items', [])
-
-    if tag:
-        filtered_events = [
-            event for event in events
-            if tag in event.get('description', '')
-        ]
+    print(f"events:\n{events}")
+          
+ # --- タグでフィルタリング ---
+    if tags:
+        # 安全のためタグはすべて文字列化＆前後の空白削除
+        normalized_tags = [t.strip() for t in tags if isinstance(t, str)]
+        filtered_events = []
+        for e in events:
+            desc = e.get("description", "") or ""
+            desc_norm = desc.replace("\u3000", " ").strip()  # 全角空白除去
+            if any(tag in desc_norm for tag in normalized_tags):
+                filtered_events.append(e)
     else:
-        filtered_events = events
+        filtered_events = events    
     
+    print(f"filterd_events:\n{filtered_events}")
     
     simplified_events = []
     for e in filtered_events:

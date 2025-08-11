@@ -12,7 +12,6 @@ from calendar_utils.pick_up_events import pick_up_events
 from calendar_utils.delete_events import delete_events
 from werkzeug.utils import secure_filename
 from pdf_utils.pdf_parser_A import extract_names_from_PDF_A, get_schedule_month_from_PDF_A,extract_schedule_from_PDF_A
-from pdf_utils.pdf_parser_4llm import extract_schedule_from_markdown, extract_names_from_pdf_with_4llm, get_schedule_month_from_pdf_with_4llm
 from pdf_utils.pdf_parser_B import extract_HD_schedule_from_PDF_B,extract_names_from_PDF_B,extract_month_from_PDF_B
 from flask import Flask
 from flask_session import Session  # ← 追加
@@ -58,9 +57,12 @@ def index():
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
+    session.pop("path_PDA_A", None)
+    session.pop("path_PDA_B", None)
     session.pop("names", None)
-    session.pop("year", None)
-    session.pop("month", None)
+    session.pop("year_month_pdf_A",None)
+    session.pop("year_B", None)
+    session.pop("month_B", None)
 
     def unique_filename(original_filename, tag):
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -246,31 +248,30 @@ def delete_registered_events():
     path_PDF_A = session.get("path_PDF_A")
     path_PDF_B=session.get("path_PDF_B")
     all_events_to_delete = []  # ← 全ての削除対象をここに集約
+    print("[DEBUG] path_PDF_B repr:", repr(path_PDF_B), type(path_PDF_B))
 
     
     
     if path_PDF_A:
-        year_month_pdf_A = session.get("year_month_pdf_A", (None, None))
-        if all(year_month_pdf_A):
-            year_A, month_A = year_month_pdf_A
-            events_to_delete_pdf_A= pick_up_events(
-                service,
-                calendar_id="primary",
-                year=year_A,
-                month=month_A,
-                tag="MAIN"
-            )
-            print(f"[DEBUG] PDF(MAIN)から {len(events_to_delete_pdf_A)} 件削除予定")
-            all_events_to_delete.extend(events_to_delete_pdf_A)
-    if path_PDF_B:
-        year_B=session.get("year_B")
-        month_B=session.get("month_B")
+        year_A,month_A = session.get("year_month_pdf_A", (None, None))
+        events_to_delete_pdf_A= pick_up_events(
+                                                service,
+                                                calendar_id="primary",
+                                                year=int(year_A),
+                                                month=int(month_A),
+                                                tags=["MAIN"]
+                                            )
+        print(f"[DEBUG] PDF(MAIN)から {len(events_to_delete_pdf_A)} 件削除予定")
+        all_events_to_delete.extend(events_to_delete_pdf_A)
+    if  path_PDF_B not in (None, "", "None"):
+        year_B=int(session.get("year_B"))
+        month_B=int(session.get("month_B"))
         events_to_delete_pdf_B= pick_up_events(
                 service,
                 calendar_id="primary",
                 year=year_B,
                 month=month_B,
-                tag="HD"
+                tags=["HD"]
             )
         print(f"[DEBUG] PDF(HD)から {len(events_to_delete_pdf_B)} 件削除予定")
         all_events_to_delete.extend(events_to_delete_pdf_B)
@@ -293,16 +294,20 @@ def delete_events_specificed_term():
     service = build("calendar", "v3", credentials=credentials)
     selected_year = int(request.form.get("year"))
     selected_month= int(request.form.get("month"))
+    tags=request.form.getlist("tags")
+
     events_to_delete_specificed_term= pick_up_events(
                 service,
                 calendar_id="primary",
                 year=selected_year,
                 month=selected_month,
-                tag="HD" or "MAIN"
+                tags=tags
             )
+    print(f"events_to_delete_specificed_term:\n{events_to_delete_specificed_term}")
     session["deleted_events"] = events_to_delete_specificed_term.copy()
     
     delete_events(service, calendar_id="primary", events=events_to_delete_specificed_term)
+    print(f"{selected_year}年{selected_month}月の\n{events_to_delete_specificed_term}を削除しました。")
     return render_template("result2.html",deleted_events=events_to_delete_specificed_term,selected_year=selected_year,selected_month=selected_month)
 
 @app.route("/upload_to_calendar")
