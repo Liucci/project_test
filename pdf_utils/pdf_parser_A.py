@@ -37,10 +37,6 @@ def extract_names_from_PDF_A(PDF_path):
         print("☆", a)
     return full_names
 
-
-
-
-
 def extract_text_top_area(PDF_path, height_ratio=0.1):
     """
     PDFの1ページ目の上部（ページ高さのheight_ratio分）だけテキストを抽出する。
@@ -110,10 +106,6 @@ def find_word_positions(PDF_path, keyword,search_height=200):
                
     #print(f"[DEBUG] '{keyword}' の位置: {positions}")  # デバッグ用
     return positions
-
-
-
-
 
 def search_keyword_in_pdf(pdf_path, keyword, search_height=200):
     doc = fitz.open(pdf_path)

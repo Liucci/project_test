@@ -10,8 +10,6 @@ def extract_text(PDF_path):
         text += page.get_text()
     return text
 
-import fitz  # PyMuPDF
-
 def find_word_positions(PDF_path, keyword,search_height=200):
     """
     PDF内の指定文字の座標(x0, y0, x1, y1)をすべて返す。
