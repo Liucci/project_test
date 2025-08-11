@@ -58,17 +58,21 @@ def index():
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
-    session.pop("path_PDF_A", None)
-    session.pop("path_PDF_B", None)
-    session.pop("names", None)
-    session.pop("year_month_pdf_A",None)
-    session.pop("year_B", None)
-    session.pop("month_B", None)
+    # セッションからPDFファイルを削除
+    # 残っているPDFファイルを削除する
+    delete_upload_file("path_PDF_A")
+    delete_upload_file("path_PDF_B")
+    delete_session_keys("names",
+                        "year_month_pdf_A",
+                        "year_B",
+                        "month_B",
+                        "file_name_PDF_A_origin",
+                        "file_name_PDF_B_origin",
+                        "selected_name",
+                        "deleted_events",
+                        "html_events"
+                        )
 
-    check_path_PDF_A=session.get("path_PDF_A")
-    print(f"[DEBUG] pre Upload PDF_A: {check_path_PDF_A}")
-    check_path_PDF_B=session.get("path_PDF_B")
-    print(f"[DEBUG] pre Upload PDF_A: {check_path_PDF_B}")
 
     def unique_filename(original_filename, tag):
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -343,18 +347,8 @@ def upload_to_calendar():
     
     # セッションからPDFファイルを削除
     # ここでPDFファイルを削除する
-
-    path_PDF_A = session.get("path_PDF_A")
-    if path_PDF_A: 
-        os.remove(path_PDF_A)
-        session.pop("path_PDF_A", None)
-        print(f"[DEBUG] PDFファイル {path_PDF_A} を削除しました。")
-
-    path_PDF_B = session.get("path_PDF_B")
-    if path_PDF_B: 
-        os.remove(path_PDF_B)
-        session.pop("path_PDF_A", None)
-        print(f"[DEBUG] PDFファイル {path_PDF_B} を削除しました。")
+    delete_upload_file("path_PDF_A")
+    delete_upload_file("path_PDF_B")
     
 
 
@@ -371,18 +365,6 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
-def credentials_to_dict(credentials):
-    return {
-        'token': credentials.token,
-        'refresh_token': credentials.refresh_token,
-        'token_uri': credentials.token_uri,
-        'client_id': credentials.client_id,
-        'client_secret': credentials.client_secret,
-        'scopes': credentials.scopes
-    }
-
-def dict_to_credentials(d):
-    return Credentials(**d)
 
 
 
@@ -402,6 +384,44 @@ def about():
 @app.route("/contact")
 def contact():
     return render_template("contact.html")
+
+
+def credentials_to_dict(credentials):
+    return {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes
+    }
+
+def dict_to_credentials(d):
+    return Credentials(**d)
+
+#file_pathとsession内のfile_pathも消す関数
+def delete_upload_file(session_key):
+    file_path = session.get(session_key)
+    if file_path:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"[DEBUG] PDFファイル {file_path} を削除しました。")
+        else:
+            print(f"[DEBUG] PDFファイル {file_path} は存在しませんでした。")
+        session.pop(session_key, None)
+        print(f"[DEBUG] session の {session_key} を削除しました。")
+    else:
+        print(f"[DEBUG] session に {session_key} の情報がありません。")
+
+#session消す関数
+def delete_session_keys(*keys):
+    for key in keys:
+        session.pop(key, None)
+    
+    print("削除したsession key")
+    for a in keys:
+        print(f"・{a}")
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
