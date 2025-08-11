@@ -130,7 +130,7 @@ def extract_HD_schedule_from_PDF_B(PDF_path,year, selected_name,y_tolerance=5):
     HD_schedule = [n for n in convert_for_google if last_name in n.get("description", "")]
     if not HD_schedule:
         print(f"[DEBUG] {selected_name} のHD早出勤務は無し")
-        HD_schedule = None
+        HD_schedule = []
     else:
         print(f"[DEBUG] {selected_name} のHD早出勤務イベント数: {len(HD_schedule)}")
 
