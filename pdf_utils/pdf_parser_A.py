@@ -179,23 +179,39 @@ def extract_text_in_xrange(PDF_path,  x_min, x_max,page_num=1,):
     #print(f"[DEBUG] keywordと同列のテキスト: {filtered}")  # デバッグ用
     return [{"text": text, "y": y} for y, text in filtered]
 
-def extract_text_in_yrange(PDF_path,  y_min, y_max,page_num=1,):
+def extract_text_in_yrange(PDF_path, y_min, y_max, page_num=1):
     """
-    指定ページの指定y範囲にあるテキストを、左から順に返す。
+    指定ページの指定y座標範囲にあるテキストを、左から順に返す。
+    4文字のテキストは2文字ずつに分割し、2つ目のx座標は中間点に設定する。
     """
+
     doc = fitz.open(PDF_path)
     page = doc[page_num - 1]
 
     words = page.get_text("words")
-    # y座標範囲でフィルタ
+    # 指定のy座標範囲内のテキストと座標 (x0, x1, text) を取り出す
     filtered = [
-        (x0, text) for x0, y0, x1, y1, text, *_ in words
+        (x0, x1, text) for x0, y0, x1, y1, text, *_ in words
         if y0 >= y_min and y1 <= y_max
     ]
-    # Y座標順に並べてテキストだけ返す
-    filtered.sort(key=lambda w: w[0])
-    #print(f"[DEBUG] keywordと同行のテキスト: {filtered}")  # デバッグ用
-    return [{"text": text, "x": x} for x, text in filtered]
+
+    result = []
+    for x0, x1, text in filtered:
+        if len(text) == 4:
+            mid_x = (x0 + x1) / 2
+            # 2文字ずつに分割
+            first_text = text[:2]
+            second_text = text[2:]
+            result.append({"text": first_text, "x": x0})
+            result.append({"text": second_text, "x": mid_x})
+        else:
+            result.append({"text": text, "x": x0})
+
+    # x座標で左から順にソート
+    result.sort(key=lambda d: d["x"])
+
+    return result
+
 
 # 指定キーワードの列を抽出し、個々のy座標を取得
 def extract_column_and_yrange_from_PDF_A(PDF_path,keyword,search_height=200,sub=10,add=10):
@@ -231,6 +247,7 @@ def extract_schedule_from_PDF_A(PDF_path, selected_name,x_tolerance=5):
     date_line = extract_row_and_xrange_from_PDF_A(PDF_path,"名前",search_height=200,sub=20,add=10)
     target_line = extract_row_and_xrange_from_PDF_A(PDF_path,selected_name,search_height=800,sub=10,add=10)
     
+
     for i, cell in enumerate(target_line):
         if re.search(r"(日|夜|日夜|勤務|勤)", cell["text"]):
             target_line = target_line[i + 1:]
@@ -370,6 +387,11 @@ if __name__ == "__main__":
 
     test_name="大江　直義"
     print("📄 [TEST] ファイル:", test_path)
+
+
+    print(fitz.__doc__)
+    print(fitz.__version__)
+
     #extract_names_from_PDF_A(test_path)
     #search_keyword_in_pdf(test_path, test_name, search_height)
     #find_word_positions(test_path,"岡田",search_height=500)
