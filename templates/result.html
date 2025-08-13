@@ -11,9 +11,9 @@
     <h2 class="mb-3">{{selected_name}} さんの勤務予定</h2>
 
     <div class="mb-4 d-flex gap-2">
-        <a href="{{ url_for('upload_file') }}" class="btn btn-secondary">🔄 最初に戻る</a>
-        <a href="https://calendar.google.com/" target="_blank" class="btn btn-primary">📅 Googleカレンダーを確認する</a>
-        <a href="{{ url_for('logout') }}" class="btn btn-secondary"> 🚪➡️Log out</a>
+        <a href="{{ url_for('upload_file') }}" class="btn btn-success">最初に戻る</a>
+        <a href="https://calendar.google.com/" target="_blank" class="btn btn-primary">Googleカレンダーを確認する</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary">Log out</a>
     </div>
 
     <div class="alert alert-warning">
@@ -25,6 +25,7 @@
             
                 <h4>🗑️ 削除された予定</h4>
                 <ul class="list-group">
+                {% if deleted_events %}
                     {% for event in deleted_events %}
                     <li class="list-group-item">
                     {% if event.start %}
@@ -43,6 +44,9 @@
                     {% endif %}
                     </li>
                     {% endfor %}
+                {% else %}
+                    <p><strong>削除対象のイベントはありません。</strong></p>
+                {% endif %}
                 </ul>
                 
             
@@ -53,6 +57,7 @@
 
             <h4>🆕 再登録された予定</h4>
             <ul class="list-group">
+            {% if html_events %}
                 {% for event in html_events %}
                 <li class="list-group-item">
                     {% if event.start %}
@@ -71,6 +76,9 @@
                     {% endif %}
                 </li>
                 {% endfor %}
+            {% else %}
+                <p><strong>登録イベントはありません。</strong></p>
+            {% endif %}
             </ul>
         </div>
     </div>

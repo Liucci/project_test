@@ -54,9 +54,6 @@ def index():
     
         return render_template("index.html")
 
-
-
-
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
     # セッションからPDFファイルを削除
@@ -156,7 +153,7 @@ def upload_file():
                 return render_template("error_back_to_upload.html", message=f"血液浄化センター勤務表から職員名簿作成失敗{e}")
         
         else:
-            return render_template("error_back_to_upload.html",messeage="勤務表が1つもアップロードされていません")
+            return render_template("error_back_to_upload.html",message="勤務表が1つもアップロードされていません")
         
 
         session["names"]=names

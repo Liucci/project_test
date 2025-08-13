@@ -15,7 +15,8 @@
           <div class="card-header bg-success text-white text-center">
             <h3 class="mb-0">{{ selected_name }} さんの勤務予定</h3>
             <div class="alert alert-warning text-dark mt-3 mb-0">
-              ※この月の登録済み勤務予定は削除され、新たな勤務予定が再登録されます。
+              ※この月の登録済み勤務予定は削除され、新たな勤務予定が再登録されます。<br>
+              <strong>表示の登録内容を確認の上、下部の登録ボタンを押してください<strong>
             </div>
           </div>
           <div class="card-body">
@@ -44,7 +45,7 @@
               <p>勤務予定は見つかりませんでした。</p>
             {% endif %}
 
-            <div class="text-center mt-4">
+            <div class="text-center mt-2">
               <a href="{{ url_for('delete_registered_events') }}" class="btn btn-success" id="registerBtn">
                 Googleカレンダーに登録する
               </a>
@@ -69,13 +70,14 @@
                     });
                   </script>
           </div>
-
-              <div class="d-flex justify-content-center gap-2">
-                <a href="{{ url_for('upload_file') }}" class="btn btn-primary">
-                  ファイル選択画面に戻る
-                </a>
+              <div class="d-flex justify-content-center mt-1">
                 <a href="{{ url_for('select_name') }}" class="btn btn-secondary">
                   職員選択画面に戻る
+                </a>
+              </div>
+              <div class="d-flex justify-content-center  mt-1">
+                <a href="{{ url_for('upload_file') }}" class="btn btn-primary">
+                  ファイル選択画面に戻る
                 </a>
               </div>
               
