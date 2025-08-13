@@ -431,6 +431,11 @@ def credentials_to_dict(credentials):
 def dict_to_credentials(d):
     return Credentials(**d)
 
+#予期せぬエラー時
+@app.errorhandler(Exception)
+def handle_exception(e):
+    return render_template("error_back_to_index.html", message=f"予期せぬエラーが発生しました: {e}"), 500
+
 #file_pathとsession内のfile_pathも消す関数
 def delete_upload_file(session_key):
     file_path = session.get(session_key)
