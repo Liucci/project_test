@@ -74,8 +74,14 @@ def upload_file():
                         "html_events",
                         "year",
                         "month",
+                        "selected_year",
+                        "selected_month",
+                        "events_to_delete_specificed_term",
                         "tags"
                         )
+    print("session中身:")
+    for a,b in session.items():
+        print(f"・{a}:{b}")
 
 
     def unique_filename(original_filename, tag):
@@ -304,27 +310,51 @@ def delete_registered_events():
 
     return redirect(url_for("upload_to_calendar"))
 
-@app.route("/delete_events_specificed_term",methods=["POST"])
-def delete_events_specificed_term():
+@app.route("/pick_up_delete_events_specificed_term",methods=["POST"])
+def pick_up_delete_events_specificed_term():
     credentials = dict_to_credentials(session.get("credentials"))
     service = build("calendar", "v3", credentials=credentials)
     selected_year = int(request.form.get("year"))
     selected_month= int(request.form.get("month"))
+    session["selected_year"]=selected_year
+    session["selected_month"]=selected_month
     tags=request.form.getlist("tags")
 
-    events_to_delete_specificed_term= pick_up_events(
+    if selected_year and selected_month and tags:
+        events_to_delete_specificed_term= pick_up_events(
                 service,
                 calendar_id="primary",
                 year=selected_year,
                 month=selected_month,
                 tags=tags
             )
+    else:
+        return render_template("error_back_to_upload.html", message=f"検索条件を設定してください。") 
+         
     print(f"events_to_delete_specificed_term:\n{events_to_delete_specificed_term}")
-    session["deleted_events"] = events_to_delete_specificed_term.copy()
-    
-    delete_events(service, calendar_id="primary", events=events_to_delete_specificed_term)
-    print(f"{selected_year}年{selected_month}月の\n{events_to_delete_specificed_term}を削除しました。")
-    return render_template("result2.html",deleted_events=events_to_delete_specificed_term,selected_year=selected_year,selected_month=selected_month)
+    session["events_to_delete_specificed_term"] = events_to_delete_specificed_term
+    return render_template("show_schedule_to_delete_events.html",
+                           events_to_delete_specificed_term=events_to_delete_specificed_term,
+                           selected_year=selected_year,
+                           selected_month=selected_month)
+
+@app.route("/delete_events_specificed_term",methods=["POST"])
+def delete_events_specificed_term():
+    credentials = dict_to_credentials(session.get("credentials"))
+    service = build("calendar", "v3", credentials=credentials)
+    events_to_delete_specificed_term=session.get("events_to_delete_specificed_term")
+    selected_year=session.get("selected_year")
+    selected_month=session.get("selected_month")
+    if events_to_delete_specificed_term:
+        delete_events(service, calendar_id="primary", events=events_to_delete_specificed_term)#events_todelete_specificed_termは空になる
+        deleted_events=session.get("events_to_delete_specificed_term")#events_to_delete_specificed_termから再度データを取得
+        print(f"{selected_year}年{selected_month}月の\n{deleted_events}を削除しました。")
+        return render_template("result2.html",
+                            deleted_events=deleted_events,
+                            selected_year=selected_year,
+                            selected_month=selected_month)
+    else:
+        return render_template("error_back_to_upload.html", message=f"イベント削除時にエラーが発生しました。") 
 
 @app.route("/upload_to_calendar")
 def upload_to_calendar():
