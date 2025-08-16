@@ -14,6 +14,8 @@ from calendar_utils.delete_events import delete_events
 from werkzeug.utils import secure_filename
 from pdf_utils.pdf_parser_A import extract_names_from_PDF_A, get_schedule_month_from_PDF_A,extract_schedule_from_PDF_A
 from pdf_utils.pdf_parser_B import extract_HD_schedule_from_PDF_B,extract_names_from_PDF_B,extract_month_from_PDF_B
+from pdf_utils.pdf_parser_C import convert_extracted_column_for_google,pick_up_names_from_PDF_C,pick_up_year_month_from_PDF_C
+
 from flask import Flask
 from flask_session import Session  # ← 追加
 from werkzeug.utils import secure_filename
@@ -60,12 +62,16 @@ def upload_file():
     # 残っているPDFファイルを削除する
     delete_upload_file("path_PDF_A")
     delete_upload_file("path_PDF_B")
+    delete_upload_file("path_PDF_C")
     delete_session_keys("names",
                         "year_month_pdf_A",
                         "year_B",
                         "month_B",
+                        "year_C",
+                        "month_C",
                         "file_name_PDF_A_origin",
                         "file_name_PDF_B_origin",
+                        "file_name_PDF_C_origin",
                         "selected_name",
                         "deleted_events",
                         "html_events",
@@ -93,7 +99,8 @@ def upload_file():
         session["file_name_PDF_A_origin"]=file_PDF_A.filename
         file_PDF_B = request.files.get("file_PDF_B")
         session["file_name_PDF_B_origin"]=file_PDF_B.filename
-
+        file_PDF_C = request.files.get("file_PDF_C")
+        session["file_name_PDF_C_origin"]=file_PDF_C.filename
       
         # 年の抽出（ファイル名から）
         # 勤務表BはPDF内から年度を取り出せないためre-name前のfile名から取得しておく
@@ -128,7 +135,16 @@ def upload_file():
         else:
             path_PDF_B=None
             session["path_PDF_B"]=path_PDF_B
-            
+
+        if file_PDF_C and file_PDF_C.filename:
+            filename_PDF = unique_filename(file_PDF_C.filename, "PDF")
+            path_PDF_C= os.path.join(app.config['UPLOAD_FOLDER'], filename_PDF)
+            file_PDF_C.save(path_PDF_C)
+            session["path_PDF_C"] = path_PDF_C
+            print(f"[DEBUG] Uploaded PDF_C: {path_PDF_C}")
+        else:
+            path_PDF_C=None
+            session["path_PDF_C"]=path_PDF_C           
 
 
 
@@ -151,7 +167,14 @@ def upload_file():
                     print("・", a)
             except Exception as e:
                 return render_template("error_back_to_upload.html", message=f"血液浄化センター勤務表から職員名簿作成失敗{e}")
-        
+        elif path_PDF_C:
+            try:
+                names=pick_up_names_from_PDF_C(path_PDF_C)
+                print("職員名")
+                for a in names:
+                    print("・", a)
+            except Exception as e:
+                return render_template("error_back_to_upload.html", message=f"血液浄化センター勤務表から職員名簿作成失敗{e}")
         else:
             return render_template("error_back_to_upload.html",message="勤務表が1つもアップロードされていません")
         
@@ -181,6 +204,7 @@ def show_schedule():
     selected_name = session.get("selected_name")
     path_PDF_A = session.get("path_PDF_A")
     path_PDF_B=session.get("path_PDF_B")
+    path_PDF_C=session.get("path_PDF_C")
     year_B=session.get("year_B")
 
     if not selected_name:
@@ -196,7 +220,7 @@ def show_schedule():
                 html_events.extend(html_events_A)
                 session["year_month_pdf_A"] = get_schedule_month_from_PDF_A(path_PDF_A)
         except Exception as e:
-            return render_template("error_back_to_upload.html", message=f"PDF解析中にエラー: {e}")
+            return render_template("error_back_to_upload.html", message=f"{session.get('file_name_PDF_A_origin')}解析中にエラー: {e}")
 
     if path_PDF_B:
         try:
@@ -204,25 +228,54 @@ def show_schedule():
             session["month_B"]=extract_month_from_PDF_B(path_PDF_B)#eventをdeleteするときに年月が必要、年と月別のほうがpick_eventsに渡しやすい
             if html_events_B is not None and html_events_B:
                 html_events.extend(html_events_B)
-                
         except Exception as e:
-            return render_template("error_back_to_upload.html", message=f"血液浄化センター勤務表解析中にエラー: {e}")
+            return render_template("error_back_to_upload.html", message=f"{session.get('file_name_PDF_B_origin')}解析中にエラー: {e}")
+
+    if path_PDF_C:
+        try:
+            # PDF_C内のすべての早出イベント格納用
+            all_events_C = []
+            all_events_C.extend(convert_extracted_column_for_google(path_PDF_C, "心肺準備", page_num=1, add=10, sub=10, min_diff=1))
+            all_events_C.extend(convert_extracted_column_for_google(path_PDF_C, "SCP", page_num=1, add=10, sub=10, min_diff=1))
+            all_events_C.extend(convert_extracted_column_for_google(path_PDF_C, "CP準備", page_num=1, add=10, sub=10, min_diff=1))
+            all_events_C.extend(convert_extracted_column_for_google(path_PDF_C, "外回業務準備", page_num=1, add=20, sub=20, min_diff=1))
+            all_events_C.extend(convert_extracted_column_for_google(path_PDF_C, "hinotori対応", page_num=1, add=10, sub=10, min_diff=1))
+            print(f"all_events_C:{all_events_C}")
+            print("all_event_C:")
+            for a in all_events_C:
+                print(f"・{a}")
+           
+
+            year_C, month_C = pick_up_year_month_from_PDF_C(path_PDF_C, page_num=1)#list内dict構造
+            session["year_C"] = int(year_C[0]["text"])
+            session["month_C"] = int(month_C[0]["text"])
+
+            #selected_nameで抽出
+            # selected_nameの苗字だけ抽出
+            last_name = selected_name.split()[0]  # スペースで分割して先頭を取得
+            for event in all_events_C:
+                    description = event["description"]
+                    if last_name in description:  # 部分一致
+                        html_events.append(event)
+        except Exception as e:
+                return render_template("error_back_to_upload.html",
+                                        message=f"{session.get('file_name_PDF_C_origin')}解析中にエラー: {e}"
+                                        )
 
 
     # ★ HTML用イベントをセッションに保存
     #並び替え
     html_events = sorted(
-    html_events,
-    key=lambda e: e["start"].get("dateTime") or e["start"].get("date")
-)
+                        html_events,
+                        key=lambda e: (e["start"].get("dateTime") or e["start"].get("date"))[:10]
+                        )
+                        
     session["html_events"] = html_events
    
    
     print("html_events:")
-    for i, ev in enumerate(html_events):
-        print(f"[DEBUG] html_events[{i}] type: {type(ev)}")
-        for key in ['start', 'end', 'summary', 'description']:
-            print(f"{key}: {ev.get(key)} (type: {type(ev.get(key))})")
+    for ev in html_events:
+        print(f"・{ev}")
         
 
     return render_template("show_schedule.html", selected_name=selected_name, html_events=html_events)
@@ -262,6 +315,7 @@ def delete_registered_events():
     service = build("calendar", "v3", credentials=credentials)
     path_PDF_A = session.get("path_PDF_A")
     path_PDF_B=session.get("path_PDF_B")
+    path_PDF_C=session.get("path_PDF_C")
     all_events_to_delete = []  # ← 全ての削除対象をここに集約
     print("[DEBUG] path_PDF_B repr:", repr(path_PDF_B), type(path_PDF_B))
     year_B=session.get("year_B")
@@ -282,6 +336,7 @@ def delete_registered_events():
                                             )
         print(f"[DEBUG] PDF(MAIN)から {len(events_to_delete_pdf_A)} 件削除予定")
         all_events_to_delete.extend(events_to_delete_pdf_A)
+
     if  path_PDF_B not in (None, "", "None"):
         year_B=int(session.get("year_B"))
         month_B=int(session.get("month_B"))
@@ -294,6 +349,21 @@ def delete_registered_events():
             )
         print(f"[DEBUG] PDF(HD)から {len(events_to_delete_pdf_B)} 件削除予定")
         all_events_to_delete.extend(events_to_delete_pdf_B)
+
+    if path_PDF_C:
+        year_C=int(session.get("year_C"))
+        month_C=int(session.get("month_C"))
+        events_to_delete_pdf_C= pick_up_events(
+                service,
+                calendar_id="primary",
+                year=year_C,
+                month=month_C,
+                tags=["OP"]
+            )
+        print(f"[DEBUG] PDF(HD)から {len(events_to_delete_pdf_C)} 件削除予定")
+        all_events_to_delete.extend(events_to_delete_pdf_C)
+
+
 
     print(f"[DEBUG] 全消去リスト: {len(all_events_to_delete)}")
 
@@ -380,7 +450,7 @@ def upload_to_calendar():
     # ここでPDFファイルを削除する
     delete_upload_file("path_PDF_A")
     delete_upload_file("path_PDF_B")
-    
+    delete_upload_file("path_PDF_C")
 
 
 
@@ -431,10 +501,14 @@ def credentials_to_dict(credentials):
 def dict_to_credentials(d):
     return Credentials(**d)
 
+
+"""
 #予期せぬエラー時
 @app.errorhandler(Exception)
 def handle_exception(e):
     return render_template("error_back_to_index.html", message=f"予期せぬエラーが発生しました: {e}"), 500
+"""
+
 
 #file_pathとsession内のfile_pathも消す関数
 def delete_upload_file(session_key):

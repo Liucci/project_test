@@ -1,0 +1,9 @@
+#!/bin/sh
+'''exec' "/Users/ooenaoyoshi/Library/CloudStorage/OneDrive-個人用/python 練習/project/excel_to_calendar_app/.venv/bin/python3.13" "$0" "$@"
+' '''
+import sys
+from rsa.cli import encrypt
+if __name__ == '__main__':
+    if sys.argv[0].endswith('.exe'):
+        sys.argv[0] = sys.argv[0][:-4]
+    sys.exit(encrypt())
