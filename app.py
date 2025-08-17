@@ -19,6 +19,8 @@ from pdf_utils.pdf_parser_C import convert_extracted_column_for_google,pick_up_n
 from flask import Flask
 from flask_session import Session  # ← 追加
 from werkzeug.utils import secure_filename
+import traceback
+from flask import request, redirect, render_template
 app = Flask(__name__)
 
 
@@ -502,12 +504,24 @@ def dict_to_credentials(d):
     return Credentials(**d)
 
 
-"""
+
 #予期せぬエラー時
 @app.errorhandler(Exception)
 def handle_exception(e):
-    return render_template("error_back_to_index.html", message=f"予期せぬエラーが発生しました: {e}"), 500
-"""
+    # ターミナルに詳細スタックトレースを出す
+    print("=== 予期せぬエラー発生 ===")
+    traceback.print_exc()    
+
+    return render_template("error_back_to_index.html", message=f"予期せぬエラーが発生しました。最初からやり直してください。: {e}"), 500
+
+# WebViewの検出し、外部のブラウザで開くように促す
+@app.before_request
+def detect_in_app_browser():
+    ua = request.headers.get("User-Agent", "").lower()
+    # LINEやInstagramなどのWebViewを検出
+    in_app = any(keyword in ua for keyword in ["line", "instagram", "fbav", "fb_iab"])
+    if in_app:
+        return render_template("open_in_browser.html")
 
 
 #file_pathとsession内のfile_pathも消す関数
