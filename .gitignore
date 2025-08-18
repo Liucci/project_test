@@ -7,3 +7,6 @@ credentials.json
 *.pkl
 *.env
 token*.*
+# Python virtual environments
+venv/
+.venv/
