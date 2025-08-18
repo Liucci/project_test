@@ -2,7 +2,7 @@
 #flask session内にトークンナンバー等の重要な情報が含まれるため
 flask_session/
 flask_session/
-*.json
+credentials.json
 *.pem
 *.pkl
 *.env
