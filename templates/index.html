@@ -23,7 +23,7 @@
                     <h3 class="mb-0">勤務予定登録アプリ</h3>
                 </div>
                 <div class="card-body">
-                    <p>このアプリは、勤務表（Excel）をGoogleカレンダーに登録するためのツールです。</p>
+                    <p>このアプリは、勤務表(PDF)をGoogleカレンダーに登録するためのツールです。</p>
                     <p><strong>※ ご利用にはGoogle認証が必要です。</strong></p>
                     <div class="text-center">
                         <form action="{{ url_for('authorize') }}">
@@ -38,6 +38,17 @@
                         <li><a href="{{ url_for('contact') }}">お問い合わせ</a></li>
                     </ul>
                 </div>
+                    <p><strong>※ iOSでは画面下部の</strong></p>
+                        <ul class="ios-toolbar">
+                        <li>
+                            <!-- 共有：□から上向き矢印 -->
+                            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3v9m0 0l3-3m-3 3l-3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M7 11v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="label">共有</span>
+                        </li>
+                        </ul>
             </div>
         </div>
     </div>
