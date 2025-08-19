@@ -1,7 +1,7 @@
 # app.py（更新後のロジックフロー）
 
 from flask import Flask, request, render_template, redirect, url_for, session
-import os, pandas as pd
+import os
 import re
 import uuid
 from datetime import datetime, timedelta,date
