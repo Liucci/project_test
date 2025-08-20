@@ -38,17 +38,28 @@
                         <li><a href="{{ url_for('contact') }}">お問い合わせ</a></li>
                     </ul>
                 </div>
-                    <p><strong>※ iOSでは画面下部の</strong></p>
-                        <ul class="ios-toolbar">
-                        <li>
-                            <!-- 共有：□から上向き矢印 -->
-                            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 3v9m0 0l3-3m-3 3l-3-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M7 11v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <span class="label">共有</span>
-                        </li>
-                        </ul>
+                    <p>
+                        <strong>※ iOSでは画面下部の</strong>
+                        <!-- iOS共有アイコン風 -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align: middle; margin: 0 4px;">
+                            <!-- 箱（上辺なし） -->
+                            <path d="M7 9
+                                    H5
+                                    a2 2 0 0 0 -2 2
+                                    v8
+                                    a2 2 0 0 0 2 2
+                                    h14
+                                    a2 2 0 0 0 2 -2
+                                    v-8
+                                    a2 2 0 0 0 -2 -2
+                                    h-2"
+                                fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <!-- 上向き矢印（縦棒を長く） -->
+                            <path d="M12 1v10m0 -10l-4 4m4 -4l4 4"
+                                fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <strong>を押し「ホーム画面に追加」を選択してください。</strong>
+                    </p>
             </div>
         </div>
     </div>
