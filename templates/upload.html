@@ -56,30 +56,38 @@
                         <form method="POST" action="/pick_up_delete_events_specificed_term">
                             <p class="text-center">指定した年月の勤務予定だけをGoogleカレンダーから削除します。</p>
                             <div class="row mb-3 justify-content-center">
-                                    <style>
-                                        .wider-select {
-                                            min-width: 100px; /* 必要に応じて調整 */
-                                        }
-                                    </style>
+<style>
+    .centered-select {
+        min-width: 100px;
+        max-width: 300px;
+        width: 100%;       /* 親幅いっぱいまで広げる */
+        margin: 0 auto 1rem auto; /* 上下マージンで間隔、左右中央 */
+        display: block;
+    }
 
-<div class="row g-2"> <!-- g-2で列間に小さめの隙間 -->
-    <div class="col-3">
-        <label for="year" class="form-label">年</label>
-        <select class="form-select wider-select" id="year" name="year" required>
-            {% for y in range(2023, 2031) %}
-            <option value="{{ y }}">{{ y }}年</option>
-            {% endfor %}
-        </select>
-    </div>
+    .form-container {
+        display: flex;
+        flex-direction: column; /* 縦並び */
+        align-items: center;    /* 中央寄せ */
+    }
+</style>
 
-    <div class="col-3">
-        <label for="month" class="form-label">月</label>
-        <select class="form-select wider-select" id="month" name="month" required>
-            {% for m in range(1, 13) %}
-            <option value="{{ m }}">{{ m }}月</option>
-            {% endfor %}
-        </select>
-    </div>
+<div class="form-container">
+    <!-- 年 -->
+    <label for="year" class="form-label">年</label>
+    <select class="form-select centered-select" id="year" name="year" required>
+        {% for y in range(2023, 2031) %}
+        <option value="{{ y }}">{{ y }}年</option>
+        {% endfor %}
+    </select>
+
+    <!-- 月 -->
+    <label for="month" class="form-label">月</label>
+    <select class="form-select centered-select" id="month" name="month" required>
+        {% for m in range(1, 13) %}
+        <option value="{{ m }}">{{ m }}月</option>
+        {% endfor %}
+    </select>
 </div>
 
                                     <!-- タグ選択（年・月の下に移動） -->
