@@ -56,25 +56,29 @@
                         <form method="POST" action="/pick_up_delete_events_specificed_term">
                             <p class="text-center">指定した年月の勤務予定だけをGoogleカレンダーから削除します。</p>
                             <div class="row mb-3 justify-content-center">
-                                <!-- 年 -->
-                                <div class="col-3">
-                                    <label for="year" class="form-label">年</label>
-                                    <select class="form-select" id="year" name="year" required>
-                                        {% for y in range(2023, 2031) %}
-                                        <option value="{{ y }}">{{ y }}年</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
+<style>
+    .wider-select {
+        min-width: 80px; /* 必要に応じて調整 */
+    }
+</style>
 
-                                <!-- 月 -->
-                                <div class="col-3">
-                                    <label for="month" class="form-label">月</label>
-                                    <select class="form-select" id="month" name="month" required>
-                                        {% for m in range(1, 13) %}
-                                        <option value="{{ m }}">{{ m }}月</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
+<div class="col-3">
+    <label for="year" class="form-label">年</label>
+    <select class="form-select wider-select" id="year" name="year" required>
+        {% for y in range(2023, 2031) %}
+        <option value="{{ y }}">{{ y }}年</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="col-3">
+    <label for="month" class="form-label">月</label>
+    <select class="form-select wider-select" id="month" name="month" required>
+        {% for m in range(1, 13) %}
+        <option value="{{ m }}">{{ m }}月</option>
+        {% endfor %}
+    </select>
+</div>
 
                                     <!-- タグ選択（年・月の下に移動） -->
                                     <div class="col-12 mt-3 text-center">
