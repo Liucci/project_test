@@ -62,23 +62,25 @@
                                         }
                                     </style>
 
-                                    <div class="col-3">
-                                        <label for="year" class="form-label">年</label>
-                                        <select class="form-select wider-select" id="year" name="year" required>
-                                            {% for y in range(2023, 2031) %}
-                                            <option value="{{ y }}">{{ y }}年</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
+<div class="row g-2"> <!-- g-2で列間に小さめの隙間 -->
+    <div class="col-3">
+        <label for="year" class="form-label">年</label>
+        <select class="form-select wider-select" id="year" name="year" required>
+            {% for y in range(2023, 2031) %}
+            <option value="{{ y }}">{{ y }}年</option>
+            {% endfor %}
+        </select>
+    </div>
 
-                                    <div class="col-3">
-                                        <label for="month" class="form-label">月</label>
-                                        <select class="form-select wider-select" id="month" name="month" required>
-                                            {% for m in range(1, 13) %}
-                                            <option value="{{ m }}">{{ m }}月</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
+    <div class="col-3">
+        <label for="month" class="form-label">月</label>
+        <select class="form-select wider-select" id="month" name="month" required>
+            {% for m in range(1, 13) %}
+            <option value="{{ m }}">{{ m }}月</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
 
                                     <!-- タグ選択（年・月の下に移動） -->
                                     <div class="col-12 mt-3 text-center">
