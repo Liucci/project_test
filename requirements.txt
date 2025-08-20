@@ -7,4 +7,3 @@ google-auth-oauthlib
 python-dotenv
 pytz
 PyMuPDF
-gunicorn
