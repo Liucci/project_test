@@ -26,10 +26,16 @@
                     <p>このアプリは、勤務表(PDF)をGoogleカレンダーに登録するためのツールです。</p>
                     <p><strong>※ ご利用にはGoogle認証が必要です。</strong></p>
                     <div class="text-center">
-                        <form action="{{ url_for('authorize') }}">
-                            <button type="submit" class="btn btn-success">使用開始</button>
-                        </form>
-                    </div>
+                        <button type="button" class="btn btn-success" id="login-btn"
+                                data-url="{{ url_for('authorize') }}">
+                            使用開始
+                        </button>
+
+                        <script>
+                        document.getElementById("login-btn").addEventListener("click", function() {
+                            window.location.href = this.dataset.url;
+                        });
+                        </script>
                     <hr>
                     <ul>
                         <li><a href="{{ url_for('about') }}">アプリ説明</a></li>
