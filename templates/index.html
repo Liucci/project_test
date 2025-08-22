@@ -23,27 +23,24 @@
                 <div class="card-body">
                     <p>このアプリは、勤務表(PDF)をGoogleカレンダーに登録するためのツールです。</p>
                     <p><strong>※ ご利用にはGoogle認証が必要です。</strong></p>
-                    <div class="text-center">
+<div class="text-center">
+    <!-- Googleログインボタン -->
+    <button type="button" class="btn btn-success mb-4" id="login-btn"
+            data-url="{{ url_for('authorize') }}">
+        使用開始
+    </button>
 
-                        <!-- googlelogin時、キーボードを認識しないバグあり。外部ブラウザーでgoogle認証するようにした。 -->
-                        <button type="button" class="btn btn-success" id="login-btn"
-                                data-url="{{ url_for('authorize') }}">
-                            使用開始
-                        </button>
+    
+    
 
-                        <script>
-                        document.getElementById("login-btn").addEventListener("click", function() {
-                            window.location.href = this.dataset.url;
-                        });
-                        </script>
-                    <hr>
-                    <ul>
-                        <li><a href="{{ url_for('about') }}">アプリ説明</a></li>
-                        <li><a href="{{ url_for('privacy') }}">プライバシーポリシー</a></li>
-                        <li><a href="{{ url_for('terms') }}">利用規約</a></li>
-                        <li><a href="{{ url_for('contact') }}">お問い合わせ</a></li>
-                    </ul>
-                </div>
+    <!-- 左寄せ -->
+    <ul class="text-start">
+        <li><a href="{{ url_for('about') }}">アプリ説明</a></li>
+        <li><a href="{{ url_for('privacy') }}">プライバシーポリシー</a></li>
+        <li><a href="{{ url_for('terms') }}">利用規約</a></li>
+        <li><a href="{{ url_for('contact') }}">お問い合わせ</a></li>
+    </ul>
+</div>
                     <p>
                         <strong>※ iOSでは画面下部の</strong>
                         <!-- iOS共有アイコン風 -->
