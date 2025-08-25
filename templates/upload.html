@@ -142,7 +142,7 @@
                                             <div class="progress" style="height: 40px;">
                                             <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
                                                 role="progressbar" style="width: 100%">
-                                                登録処理中です。しばらくお待ちください...
+                                                データ取得中のため、他の操作はできません。完了まで少々お待ちください
                                             </div>
                                             </div>
                                         </div>
@@ -174,8 +174,8 @@
             // ローディング表示を出す
             document.getElementById("loadingArea").style.display = "block";
             // ボタンを無効化
-            this.classList.add("disabled");
-            this.innerText = "処理中...";
+            /* this.classList.add("disabled");
+            this.innerText = "処理中...";  */
             document.getElementById("deleteForm").submit();
             });
         </script>
