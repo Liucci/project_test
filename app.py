@@ -311,7 +311,7 @@ def oauth2callback():
     except Exception as e:
                 return render_template("error_back_to_index.html", message=f"Google認証失敗{e}") 
 
-@app.route("/delete_registered_events")
+@app.route("/delete_registered_events",methods=["POST"])
 def delete_registered_events():
     credentials = dict_to_credentials(session.get("credentials"))
     service = build("calendar", "v3", credentials=credentials)
