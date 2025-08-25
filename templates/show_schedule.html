@@ -55,30 +55,32 @@
 
               <!-- モーダルダイアログ -->
               <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-              <div class="modal-header">
-              <h5 class="modal-title">確認</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
-              </div>
-                  <div class="modal-body">
-                    本アプリは、<strong>Google カレンダー</strong>にアクセスし、勤務予定を登録・更新します。<br>
-                    取得する情報は「勤務予定の登録」にのみ利用され、他の目的には使用されません。<br>
-                    この操作に同意しますか？
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">確認</h5>
+                      <!--右上の閉じるボタン-->
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる">
+                        </button>
+                    </div>
+                          <div class="modal-body">
+                            本アプリは、<strong>Google カレンダー</strong>にアクセスし、勤務予定を登録・更新します。<br>
+                            取得する情報は「勤務予定の登録」にのみ利用され、他の目的には使用されません。<br>
+                            この操作に同意しますか？
+                          </div>
+                          <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                キャンセル
+                              </button>
+                
+                            <form action="{{ url_for('delete_registered_events') }}" method="post" id="registerForm">
+                                <button type="submit" class="btn btn-primary" id="confirmRegisterBtn">
+                                  登録する
+                                </button>
+                            </form>              
+                          </div>
                   </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                  キャンセル
-                </button>
-              
-                  <form action="{{ url_for('delete_registered_events') }}" method="post" id="registerForm">
-                      <button type="submit" class="btn btn-primary" id="confirmRegisterBtn">
-                        登録する
-                      </button>
-                  </form>              
-              </div>
-              </div>
-              </div>
+                </div>
               </div>  
 
                 <!-- BootstrapのJSを必ず読み込む -->
@@ -118,11 +120,11 @@
                 </a>
               </div>
               
-          </div>
         </div>
       </div>
     </div>
   </div>
+
 
 </body>
 </html>
