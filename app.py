@@ -16,11 +16,9 @@ from pdf_utils.pdf_parser_A import extract_names_from_PDF_A, get_schedule_month_
 from pdf_utils.pdf_parser_B import extract_HD_schedule_from_PDF_B,extract_names_from_PDF_B,extract_month_from_PDF_B
 from pdf_utils.pdf_parser_C import convert_extracted_column_for_google,pick_up_names_from_PDF_C,pick_up_year_month_from_PDF_C
 
-from flask import Flask
 from flask_session import Session  # ← 追加
 from werkzeug.utils import secure_filename
 import traceback
-from flask import request, redirect, render_template
 from urllib.parse import quote
 app = Flask(__name__)
 
@@ -83,7 +81,8 @@ def upload_file():
                         "selected_year",
                         "selected_month",
                         "events_to_delete_specificed_term",
-                        "tags"
+                        "tags",
+                        "error_message"
                         )
     print("session中身:")
     for a,b in session.items():
@@ -541,6 +540,13 @@ def delete_session_keys(*keys):
         print(f"・{a}")
 
 #error処理関数関連
+LOG_DIR = "error_log"
+MAX_LOGS = 30
+# ログフォルダを事前に作成
+os.makedirs(LOG_DIR, exist_ok=True)
+
+
+
 #予期せぬエラー時
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -549,11 +555,29 @@ def handle_exception(e):
     traceback.print_exc() 
     session["error_message"] = str(e) 
 
+    # --- ログファイル出力 ---
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_filename = f"error_{timestamp}.txt"
+    log_path = os.path.join(LOG_DIR, log_filename)
+    # ログファイルにエラー内容を書き込む
+    with open(log_path, "w", encoding="utf-8") as f:
+        f.write(f"Time: {datetime.now().isoformat()}\n")
+        f.write(f"Error: {str(e)}\n\n")
+        f.write("Traceback:\n")
+        f.write("".join(traceback.format_exc()))
+
+    # --- ログが30個を超えたら古いものから削除 ---
+    logs = sorted(os.listdir(LOG_DIR))  # ファイル名でソート（タイムスタンプ付き）
+    if len(logs) > MAX_LOGS:
+        for old_log in logs[:-MAX_LOGS]:
+            os.remove(os.path.join(LOG_DIR, old_log))
+
+
     return render_template("error_back_to_index.html", message=f"予期せぬエラーが発生しました。最初からやり直してください。: {e}"), 500
 
 
 
-
+# エラー報告メール送信用
 @app.route("/send_error_mail")
 def send_error_mail():
     recipient = "work_schedule_calendar_develop@proton.me"
