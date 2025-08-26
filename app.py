@@ -21,6 +21,7 @@ from flask_session import Session  # ← 追加
 from werkzeug.utils import secure_filename
 import traceback
 from flask import request, redirect, render_template
+from urllib.parse import quote
 app = Flask(__name__)
 
 
@@ -505,14 +506,6 @@ def dict_to_credentials(d):
 
 
 
-#予期せぬエラー時
-@app.errorhandler(Exception)
-def handle_exception(e):
-    # ターミナルに詳細スタックトレースを出す
-    print("=== 予期せぬエラー発生 ===")
-    traceback.print_exc()    
-
-    return render_template("error_back_to_index.html", message=f"予期せぬエラーが発生しました。最初からやり直してください。: {e}"), 500
 
 # WebViewの検出し、外部のブラウザで開くように促す
 @app.before_request
@@ -547,6 +540,41 @@ def delete_session_keys(*keys):
     for a in keys:
         print(f"・{a}")
 
+#error処理関数関連
+#予期せぬエラー時
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # ターミナルに詳細スタックトレースを出す
+    print("=== 予期せぬエラー発生 ===")
+    traceback.print_exc() 
+    session["error_message"] = str(e) 
+
+    return render_template("error_back_to_index.html", message=f"予期せぬエラーが発生しました。最初からやり直してください。: {e}"), 500
+
+
+
+
+@app.route("/send_error_mail")
+def send_error_mail():
+    recipient = "work_schedule_calendar_develop@proton.me"
+    subject = quote("アプリエラー報告")  # URLエンコード
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    error_message = session.get("error_message")
+    body = quote(
+                    f"以下のエラーが発生しました。\n\nErrorCode: {error_message}\nTime: {timestamp}\n\nご確認ください。"
+                )
+
+    mailto_link = f"mailto:{recipient}?subject={subject}&body={body}"
+
+    # メーラーを開いた後、index に戻る
+    return f'''
+            <script>
+                window.location.href = "{mailto_link}";
+                setTimeout(function() {{
+                    window.location.href = "/";
+                }}, 100);  // 100ms 後にトップページへリダイレクト
+            </script>
+            '''
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

@@ -9,12 +9,22 @@
 </head>
 <body class="bg-light">
     <div class="container mt-5">
-        <div class="alert alert-danger">
-            <h4 class="alert-heading">エラーが発生しました</h4>
-            <p>{{ message }}</p>
-            <hr>
-            <a href="/" class="btn btn-primary" >最初に戻る</a>
-        </div>
+        
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">エラーが発生しました</h4>
+                <p>{{ message }}</p>
+                <hr>
+                <div class="col-md-8">
+                    <div class="mb-2">
+                    <a href="/" class="btn btn-primary" >最初に戻る</a>
+                    </div>
+                    <div>
+                    <!-- エラー報告ボタン -->
+                    <a href="{{ url_for('send_error_mail') }}" class="btn btn-primary">エラーを報告する</a>        
+                    </div>
+                </div>
+            </div>
+        
     </div>
 </body>
 </html>
