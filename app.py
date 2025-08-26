@@ -516,7 +516,8 @@ def detect_in_app_browser():
         return render_template("open_in_browser.html")
     
 # favicon.icoのルーティング
-#ブラウザが自動でfavicon.icoを探しに行くため404エラーを防ぐ
+#ブラウザが自動でfavicon.icoを探しに行くため発生する404エラーを防ぐ
+#faviconをstatic/iconsに保存しておく
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(

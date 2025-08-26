@@ -10,6 +10,13 @@ def extract_text(PDF_path):
         text += page.get_text()
     return text
 
+def extract_full_characters(PDF_path):
+    doc = fitz.open(PDF_path)
+    page = doc[0] 
+    full1_words = page.get_text("rawdict")
+
+    print(f"full1_words:\n{full1_words}")
+
 def extract_names_from_PDF_A(PDF_path):
     text = extract_text(PDF_path)
 
@@ -133,9 +140,9 @@ def search_keyword_in_pdf(pdf_path, keyword, search_height=200):
                     continue
                 if text == keyword:#フルネームヒット時はfull_hitsに格納
                     full_hits.append((page_num, x0, y0, x1, y1))
-                elif text == last_name:#苗字ヒット時はfull_hitsに格納
+                elif text == last_name:#苗字ヒット時はlast_hitsに格納
                     last_hits.append((page_num, x0, y0, x1, y1))
-                elif text == first_name:#名前ヒット時はfull_hitsに格納
+                elif text == first_name:#名前ヒット時はfirst_hitsに格納
                     first_hits.append((page_num, x0, y0, x1, y1))
 
             if len(full_hits)==1:  # フルネームでヒット
@@ -379,7 +386,7 @@ if __name__ == "__main__":
 
     # テスト対象のファイルパス
     upload_dir = "uploads"
-    test_filename = "勤務表2025.8ver4.pdf"
+    test_filename = "勤務表2025.9ver3.1.pdf"
     #test_filename = "血液浄化センター　早出勤務表　2025年 8月.pdf"
     test_path = os.path.join(upload_dir, test_filename)
     search_height=800
@@ -391,14 +398,16 @@ if __name__ == "__main__":
 
     print(fitz.__doc__)
     print(fitz.__version__)
-
+    
+    extract_full_characters(test_path)
+    
     #extract_names_from_PDF_A(test_path)
     #search_keyword_in_pdf(test_path, test_name, search_height)
     #find_word_positions(test_path,"岡田",search_height=500)
     #extract_column_and_yrange_from_PDF_A(test_path,"名前",sub=40,add=30)
     #extract_row_and_xrange_from_PDF_A(test_path,"名前",search_height=200,sub=20,add=10)
     #extract_row_and_xrange_from_PDF_A(test_path,"大江　直義",search_height=500,sub=10,add=10)
-    extract_schedule_from_PDF_A(test_path,test_name,x_tolerance=6)
+    #extract_schedule_from_PDF_A(test_path,test_name,x_tolerance=6)
     #extract_names_from_PDF_A(test_path)
 
     #extract_month_from_PDF_A(test_path)
