@@ -1,6 +1,6 @@
 # app.py（更新後のロジックフロー）
 
-from flask import Flask, request, render_template, redirect, url_for, session
+from flask import Flask, request, render_template, redirect, url_for, session,send_from_directory
 import os
 import re
 import uuid
@@ -514,6 +514,16 @@ def detect_in_app_browser():
     in_app = any(keyword in ua for keyword in ["line", "instagram", "fbav", "fb_iab"])
     if in_app:
         return render_template("open_in_browser.html")
+    
+# favicon.icoのルーティング
+#ブラウザが自動でfavicon.icoを探しに行くため404エラーを防ぐ
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
 
 
 #file_pathとsession内のfile_pathも消す関数
