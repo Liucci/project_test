@@ -520,7 +520,7 @@ def detect_in_app_browser():
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(
-        os.path.join(app.root_path, 'static'),
+        os.path.join(app.root_path, 'static','icons'),
         'favicon.ico',
         mimetype='image/vnd.microsoft.icon'
     )
