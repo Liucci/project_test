@@ -29,9 +29,9 @@ def extract_chars(PDF_path, page_mun=1):
                         })
 
     
-    print(f"chars_list")
-    for a in chars_list[:5]:
-        print(f"・{a}")
+    # print(f"chars_list")
+    # for a in chars_list[:5]:
+    #     print(f"・{a}")
     
     return chars_list
 
@@ -142,7 +142,7 @@ def pick_up_date_line(PDF_path,sub=10, add=-5):
     # position は [(page_num, x0, y0, x1, y1)] 形式を想定
     y0 = position[0][2]
     y1 = position[0][4]
-    print(f"y0:{y0}, y1:{y1}")
+    #print(f"y0:{y0}, y1:{y1}")
     y_min=y0-sub
     y_max=y1+add
     date_line=[]
@@ -161,10 +161,10 @@ def pick_up_date_line(PDF_path,sub=10, add=-5):
 def pick_up_row_text(PDF_path,keyword,page_num=1,sub=5,add=-3,search_height=800):
     all_text=extract_chars(PDF_path, page_mun=page_num)
     words,keyword_position=find_word_positions(PDF_path, keyword,search_height=search_height)
-    print(f"keyword_position:{keyword_position}")
+    #print(f"keyword_position:{keyword_position}")
     y0=keyword_position[0][2]
     y1=keyword_position[0][4]
-    print(f"y0:{y0}, y1:{y1}")
+    #print(f"y0:{y0}, y1:{y1}")
     y_min=y0-sub
     y_max=y1+add
 
@@ -172,7 +172,7 @@ def pick_up_row_text(PDF_path,keyword,page_num=1,sub=5,add=-3,search_height=800)
     for text in all_text:
         if text["area"][1]>=y_min and text["area"][3]<=y_max:
             clean_text=text["text"].strip()
-            if clean_text !="":
+            if clean_text !="":#空白除外
                 #print(f"・{text}")
                 target_row.append({"text":text["text"],"area":text["area"]})
     return target_row
@@ -181,12 +181,12 @@ def merge_target_row_dataline(PDF_path, keyword):
     target_row=pick_up_row_text(PDF_path, keyword,page_num=1, sub=5,add=-3,search_height=800)
     date_line = pick_up_date_line(PDF_path,sub=10, add=-5)
     
-    print("date_line")
-    for a in date_line:
-        print(f"・{a}")
-    print("target_row")
-    for a in target_row:
-        print(f"・{a}")
+    # print("date_line")
+    # for a in date_line:
+    #     print(f"・{a}")
+    # print("target_row")
+    # for a in target_row:
+    #     print(f"・{a}")
     
     merged=[]
     for d in date_line:
@@ -200,9 +200,9 @@ def merge_target_row_dataline(PDF_path, keyword):
                 new_t = t.copy()          # 辞書をコピー
                 new_t["date"] = d["text"] # date を追加
                 merged.append(new_t)
-    print("merged")
-    for a in merged:
-         print(f"・{a}")
+    # print("merged")
+    # for a in merged:
+    #      print(f"・{a}")
 
     grouped = defaultdict(list)
     # 日付ごとに grouped に格納
