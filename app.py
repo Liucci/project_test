@@ -54,8 +54,24 @@ CLIENT_SECRET_FILE = 'credentials.json'
 
 @app.route("/", methods=["GET"])
 def index():
-    
-        return render_template("index.html")
+        # アップロードフォルダのパス
+    upload_folder = os.path.join(app.root_path, "uploads")
+
+    # フォルダ内のファイルを削除
+    if os.path.exists(upload_folder):
+        for filename in os.listdir(upload_folder):
+            file_path = os.path.join(upload_folder, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    print(f"uploadsフォルダ内削除: {file_path}")
+            except Exception as e:
+                print(f"uploadsフォルダ内削除失敗: {file_path} ({e})")
+
+
+
+
+    return render_template("index.html")
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
@@ -217,7 +233,7 @@ def show_schedule():
     # 勤務表PDFからのスケジュール抽出
     if path_PDF_A:
         try:
-            html_events_A = extract_schedule_from_PDF_A(path_PDF_A, selected_name,x_tolerance=7)
+            html_events_A = extract_schedule_from_PDF_A(path_PDF_A, selected_name)
             if html_events_A is not None:
                 html_events.extend(html_events_A)
                 session["year_month_pdf_A"] = get_schedule_month_from_PDF_A(path_PDF_A)
