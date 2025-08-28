@@ -196,6 +196,9 @@ def check_contain_color_area(pdf_path,keyword,page_num=1,add=10,sub=10,min_diff=
             y1_c=color["area"][3]
             if x0_t>=x0_c and x1_c>=x1_t and y0_t>=y0_c and y1_c>=y1_t:
                 target["color"]=color["color"]
+    # 例: target_line から color キーが存在するものだけを抽出
+    target_line = [target for target in target_line if target.get("color")]
+
     """            
     print(f"{keyword}列にcolorを追加")
     for a in target_line:
